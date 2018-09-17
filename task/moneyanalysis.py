@@ -12,7 +12,7 @@ class MoneyAnalysis(object):
     def trading_list(self, code):
         """
         交易明细
-        :param code: 代码
+        code: 代码
         1-5 100-500手
         6 800手
         7 1000手
