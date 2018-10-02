@@ -1,40 +1,26 @@
-# codint=utf-8
-
+# -*- coding: utf-8 -*-
+"""基础数据获取"""
 import re
-import redis
-import uuid
 import time
-import datetime
 import requests
+import datetime
+from django.conf import settings
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
-class ChooseHot(object):
-    """筛选"""
+from extends import Base
+from .models import StockInfo
 
-    def __init__(self):
-        self.code_list = []
-        self.token = '655d50949a8f53665db0d0266d338b56b5bd8a3976ba1ac9134fe684'
-        self.qt_url1 = 'http://qt.gtimg.cn/q='
-        self.ts_url = 'http://api.tushare.pro'
-        self.headers = {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:62.0) Gecko/20100101 Firefox/62.0'
-        }
-        self.conn_redis = redis.StrictRedis(host='127.0.0.1', password='blcmdb', db=3)
 
-    def all_code(self):
-        """获取所有代码"""
-        req_params = {
-            'api_name': 'stock_basic',
-            'token': self.token,
-            'params': {'list_status': 'L'},
-            'fields': ['ts_code', 'name', 'list_date']
-        }
-        get_code = requests.post(self.ts_url, json=req_params)
-        code_info = get_code.json()
-        return code_info['data']['items']
+class BasisDataViewSet(APIView):
+    """基础数据"""
+    code_list = []
+    qt_url1 = 'http://qt.gtimg.cn/q='
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:62.0) Gecko/20100101 Firefox/62.0'
+    }
 
-    def basis_screening(self):
-        """基础筛选"""
-        screening_data = {}
+    def get(self, request):
         all_code = self.all_code()
         times_number = 100
         for num in range(0, len(all_code) // times_number + 1):
@@ -43,36 +29,50 @@ class ChooseHot(object):
                 if 'ST' in i[1]:
                     continue
                 code_split = str(i[0]).split('.')
-                screening_data[code_split[0]] = {
-                    'info': {
-                        'code': code_split[1].lower() + code_split[0],
-                        'name': i[1],
-                        'concept': [],
-                        '上市时间': i[2],
-                    },
-                    'data': {}
-                }
-                code += f's_{code_split[1].lower() + code_split[0]},'
-            open_url = requests.get(self.qt_url1 + code, timeout=120)
-            code_list = re.findall('".*"', open_url.text)
-            for c in code_list:
-                code_price_info = c.replace('"', '').split('~')
-                if int(code_price_info[-3]) >= 9000 and float(code_price_info[-1]) <= 260:  # 交易额 and 市值
+                if not Base(StockInfo, **{'db_status': 1, 'code': code_split[0]}).findfilter():
+                    listed_time = datetime.datetime.strptime(i[2], "%Y%m%d")
                     jet_lag = (
                             datetime.datetime.now() -
-                            datetime.datetime.strptime(screening_data[code_price_info[2]]['info']['上市时间'], "%Y%m%d")
+                            listed_time
                     ).days
                     if jet_lag <= 365:
                         new = 1
                     else:
                         new = 0
-                    screening_data[code_price_info[2]]['info']['次新'] = new
-                else:
-                    screening_data.pop(code_price_info[2])
-        if screening_data:
-            self.conn_redis.set('code_list', str(screening_data))
+                    Base(StockInfo, **{
+                        'db_status': 1,
+                        'exchange': code_split[1],
+                        'code': code_split[0],
+                        'name': i[1],
+                        'new': new,
+                        'listed_time': datetime.datetime.strftime(listed_time, '%Y-%m-%d'),
+                    }).save_db()
+                code += f's_{code_split[1].lower() + code_split[0]},'
+            open_url = requests.get(self.qt_url1 + code, timeout=120)
+            code_list = re.findall('".*"', open_url.text)
+            for c in code_list:
+                code_price_info = c.replace('"', '').split('~')
+                query_code = Base(StockInfo, **{'db_status': 1, 'code': code_price_info[2]}).findfilter()
+                if query_code:
+                    query_code[0].total_equity = round(float(code_price_info[-1]) / float(code_price_info[3]), 3)
+                    query_code[0].save()
 
-    def query_concept(self, code: str):
+        return Response({"BasisData": {"Status": 1, "msg": "Basis data update node"}})
+
+    def all_code(self):
+        """获取所有代码"""
+        req_params = {
+            'api_name': 'stock_basic',
+            'token': settings.TS_TOKEN,
+            'params': {'list_status': 'L'},
+            'fields': ['ts_code', 'name', 'list_date']
+        }
+        get_code = requests.post(settings.TS_URL, json=req_params)
+        code_info = get_code.json()
+        return code_info['data']['items']
+
+    @staticmethod
+    def query_concept(code: str):
         """所属概念"""
         url = f'http://web.ifzq.gtimg.cn/stock/relate/data/plate?code={code}'
         open_url = requests.get(url)
@@ -82,7 +82,7 @@ class ChooseHot(object):
 
     def quert_concept_ths(self):
         """同花顺概念"""
-        concept_dict = eval(self.conn_redis.get('code_list'))
+        concept_dict = []
         url = "http://q.10jqka.com.cn/gn/"
         open_url = requests.get(url, headers=self.headers)
         if open_url.status_code == 200:
@@ -98,12 +98,10 @@ class ChooseHot(object):
                     concept_code = self.code_quert_concept_ths(find_name[0][0], 1)
                     if concept_code:
                         print(concept_code)
-                        for i in list(set(concept_code)):
-                            if i not in concept_dict:
+                        for c in list(set(concept_code)):
+                            if c not in concept_dict:
                                 continue
-                            concept_dict[i]['info']['concept'].append(find_name[0][1])
-        if concept_dict:
-            self.conn_redis.set('code_list', str(concept_dict))
+                            concept_dict[c]['info']['concept'].append(find_name[0][1])
 
     def code_quert_concept_ths(self, concept_code, page):
         """
@@ -114,12 +112,10 @@ class ChooseHot(object):
         """
         url = f'http://q.10jqka.com.cn/gn/detail/field/264648/order/' \
               f'desc/page/{page}/ajax/1/code/{concept_code}'
-        uuid.uuid4()
-        self.headers['Cookie'] = f'v=AjYeLmkTcR-28gV7m1wn7E9pgW05V3oCzJmvNKAfIkm0HtifCOfKoZwr_MJz;'
+        self.headers['Cookie'] = f'v=ApdyQuWBgEwgOATAzCzWcxZyIArg3Gs-RbDvsunEs2bNGLm48az7jlWAfwP6;'
         open_url = requests.get(url, headers=self.headers)
         if open_url.status_code == 200:
             url_info = open_url.text
-            print(url_info)
             self.code_list += re.findall(
                 '<td><a href="http://stockpage.10jqka.com.cn/(\d+)" target="_blank">.*</a></td>',
                 url_info
@@ -133,5 +129,3 @@ class ChooseHot(object):
                     for pages in range(2, int(all_page[0]) + 1):
                         self.code_quert_concept_ths(concept_code, pages)
         return self.code_list
-
-a = ChooseHot().quert_concept_ths()

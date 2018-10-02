@@ -13,9 +13,12 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
+from basicdata.views import BasisDataViewSet
+from sk_optional import urls as sk_optional_url
+
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('basisdata/', BasisDataViewSet.as_view(), name='获取基础数据'),
+    path('skoptional/', include(sk_optional_url), name='自选')
 ]
