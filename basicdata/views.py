@@ -8,20 +8,23 @@ from django.conf import settings
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from extends import Base
+from extends import Base, ts_api
 from .models import StockInfo
 
 
 class BasisDataViewSet(APIView):
     """基础数据"""
     code_list = []
-    qt_url1 = 'http://qt.gtimg.cn/q='
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:62.0) Gecko/20100101 Firefox/62.0'
     }
 
     def get(self, request):
-        all_code = self.all_code()
+        all_code = ts_api(
+            api_name='stock_basic',
+            params={'list_status': 'L'},
+            fields=['ts_code', 'name', 'list_date']
+        )
         times_number = 100
         for num in range(0, len(all_code) // times_number + 1):
             code = ''
@@ -48,7 +51,7 @@ class BasisDataViewSet(APIView):
                         'listed_time': datetime.datetime.strftime(listed_time, '%Y-%m-%d'),
                     }).save_db()
                 code += f's_{code_split[1].lower() + code_split[0]},'
-            open_url = requests.get(self.qt_url1 + code, timeout=120)
+            open_url = requests.get(settings.QT_URL2 + code, timeout=120)
             code_list = re.findall('".*"', open_url.text)
             for c in code_list:
                 code_price_info = c.replace('"', '').split('~')
@@ -58,18 +61,6 @@ class BasisDataViewSet(APIView):
                     query_code[0].save()
 
         return Response({"BasisData": {"Status": 1, "msg": "Basis data update node"}})
-
-    def all_code(self):
-        """获取所有代码"""
-        req_params = {
-            'api_name': 'stock_basic',
-            'token': settings.TS_TOKEN,
-            'params': {'list_status': 'L'},
-            'fields': ['ts_code', 'name', 'list_date']
-        }
-        get_code = requests.post(settings.TS_URL, json=req_params)
-        code_info = get_code.json()
-        return code_info['data']['items']
 
     @staticmethod
     def query_concept(code: str):
