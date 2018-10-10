@@ -50,14 +50,15 @@ class BasisDataViewSet(APIView):
                         'new': new,
                         'listed_time': datetime.datetime.strftime(listed_time, '%Y-%m-%d'),
                     }).save_db()
-                code += f's_{code_split[1].lower() + code_split[0]},'
+                code += f'{code_split[1].lower() + code_split[0]},'
             open_url = requests.get(settings.QT_URL2 + code, timeout=120)
             code_list = re.findall('".*"', open_url.text)
             for c in code_list:
                 code_price_info = c.replace('"', '').split('~')
                 query_code = Base(StockInfo, **{'db_status': 1, 'code': code_price_info[2]}).findfilter()
                 if query_code:
-                    query_code[0].total_equity = round(float(code_price_info[-1]) / float(code_price_info[3]), 3)
+                    query_code[0].total_equity = round(float(code_price_info[-9]) / float(code_price_info[3]), 3)
+                    query_code[0].circulate_equity = round(float(code_price_info[-10]) / float(code_price_info[3]), 3)
                     query_code[0].save()
 
         return Response({"BasisData": {"Status": 1, "msg": "Basis data update node"}})

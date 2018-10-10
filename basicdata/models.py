@@ -26,6 +26,7 @@ class StockInfo(models.Model):
     code = models.CharField(verbose_name='代码', max_length=6, blank=False)
     name = models.CharField(verbose_name='名称', max_length=32, blank=False)
     total_equity = models.FloatField(verbose_name='总股本', default=0, blank=False)
+    circulate_equity = models.FloatField(verbose_name='流通股', default=0, blank=False)
     listed_time = models.DateField(auto_now_add=False, auto_now=False, blank=True)
     new = models.IntegerField(verbose_name='次新', default=0, blank=False)
     concept = JSONField(verbose_name='概念', blank=False)
