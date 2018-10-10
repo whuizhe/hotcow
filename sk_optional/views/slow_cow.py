@@ -43,8 +43,13 @@ class SlowCowViewSet(APIView):
                     url_info = url_open.text
                     history_data = json.loads(url_info.split('=')[1])
                     # 获取分价表
+                    day_data = []
                     if 'qfqday' in history_data['data'][str(i.exchange).lower() + i.code]:
-                        for price in history_data['data'][str(i.exchange).lower() + i.code]['qfqday']:
+                        day_data = history_data['data'][str(i.exchange).lower() + i.code]['qfqday']
+                    elif 'day' in history_data['data'][str(i.exchange).lower() + i.code]:
+                        day_data = history_data['data'][str(i.exchange).lower() + i.code]['day']
+                    if day_data:
+                        for price in day_data:
                             if not Base(StockPrice, **{'code': i.code, 'trading_day': price[0]}).findfilter():
                                 add_price = {
                                     'sk_info_id': i.id,
@@ -57,6 +62,7 @@ class SlowCowViewSet(APIView):
                                     'hand_number': eval(price[5])
                                 }
                                 Base(StockPrice, **add_price).save_db()
+
                 self.ma_day(str(i.exchange).lower(), i.code, td_last)
         return Response({'SlowCow': 'data update node'})
 
