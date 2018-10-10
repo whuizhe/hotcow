@@ -14,7 +14,6 @@ from basicdata.models import *
 
 class SlowCowViewSet(APIView):
     """慢牛"""
-    code_list = []
 
     def get(self, request):
         today = datetime.date.today()
@@ -61,7 +60,8 @@ class SlowCowViewSet(APIView):
                 self.ma_day(str(i.exchange).lower(), i.code, td_last)
         return Response({'SlowCow': 'data update node'})
 
-    def ma_day(self, exchange, code, trading_day):
+    @staticmethod
+    def ma_day(exchange, code, trading_day):
         """日均线"""
         code_price = Base(StockPrice, **{'code': code, 'trading_day': trading_day}).findfilter()
         if code_price and code_price[0].average == 0:
