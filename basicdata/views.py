@@ -57,6 +57,16 @@ class BasisDataViewSet(APIView):
                 code_price_info = c.replace('"', '').split('~')
                 query_code = Base(StockInfo, **{'db_status': 1, 'code': code_price_info[2]}).findfilter()
                 if query_code:
+                    jet_lag = (
+                            datetime.date.today() -
+                            query_code[0].listed_time
+                    ).days
+                    if jet_lag <= 365:
+                        new = 1
+                    else:
+                        new = 0
+                    query_code[0].new = new
+                    query_code[0].name = code_price_info[1]
                     query_code[0].total_equity = round(float(code_price_info[-9]) / float(code_price_info[3]), 3)
                     query_code[0].circulate_equity = round(float(code_price_info[-10]) / float(code_price_info[3]), 3)
                     query_code[0].save()
