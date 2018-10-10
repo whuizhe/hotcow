@@ -21,7 +21,7 @@ class SlowCowViewSet(APIView):
             api_name='trade_cal',
             params={
                 'is_open': 1,
-                'start_date': (today - datetime.timedelta(days=10)).strftime('%Y%m%d'),
+                'start_date': (today - datetime.timedelta(days=30)).strftime('%Y%m%d'),
                 'end_date': today.strftime('%Y%m%d')
             },
             fields=['cal_date', 'is_open']
