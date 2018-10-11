@@ -51,6 +51,8 @@ class StockPrice(models.Model):
     hand_number = models.IntegerField(verbose_name='手数', default=0, blank=False)
     active_number = models.IntegerField(verbose_name='主动买入', default=0, blank=False)
     bidding_rate = models.FloatField(verbose_name='主动买入均价', default=0, blank=False)
+    main_amount = models.FloatField(verbose_name='主力', default=0, blank=False)
+    loose_amount = models.FloatField(verbose_name='散户', default=0, blank=False)
     updated = models.DateTimeField(auto_now_add=False, auto_now=True, blank=True)
 
     class Meta:

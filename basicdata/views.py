@@ -28,7 +28,7 @@ class BasisDataViewSet(APIView):
         times_number = 100
         for num in range(0, len(all_code) // times_number + 1):
             code = ''
-            for i in all_code[num * times_number:times_number * (num + 1) - 1]:
+            for i in all_code[num * times_number:times_number * (num + 1)]:
                 if 'ST' in i[1]:
                     continue
                 code_split = str(i[0]).split('.')
