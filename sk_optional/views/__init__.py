@@ -1,1 +1,1 @@
-from .slow_cow import SlowCowViewSet
+from .slow_cow import *
