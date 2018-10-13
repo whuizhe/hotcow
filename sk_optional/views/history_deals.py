@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-"""慢牛"""
+"""历史交易"""
 import json
 import re
 import requests
 import datetime
+import asyncio
 from django.conf import settings
-from django_redis import get_redis_connection
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -17,65 +17,62 @@ __all__ = ['HistoryDealsViewSet', 'MainFlowsViewSet']
 
 class HistoryDealsViewSet(APIView):
     """历史交易"""
-    connection_redis = get_redis_connection()
+    today = datetime.date.today()
 
     def get(self, request):
         """GET请求"""
-
-        today = datetime.date.today()
         trading_day = ts_api(
             api_name='trade_cal',
             params={
                 'is_open': 1,
-                'start_date': (today - datetime.timedelta(days=30)).strftime('%Y%m%d'),
-                'end_date': today.strftime('%Y%m%d')
+                'start_date': (self.today - datetime.timedelta(days=10)).strftime('%Y%m%d'),
+                'end_date': self.today.strftime('%Y%m%d')
             },
             fields=['cal_date', 'is_open']
         )
         if trading_day:
-            td = datetime.datetime.strftime(
-                datetime.datetime.strptime(trading_day[0][0], '%Y%m%d'), '%Y-%m-%d'
-            )
             td_last = datetime.datetime.strftime(
                 datetime.datetime.strptime(trading_day[-1][0], '%Y%m%d'), '%Y-%m-%d'
-            )
+            )  # 最近历史交易日
+
+            tasks = []
+            asyncio.set_event_loop(asyncio.new_event_loop())  # 创建新的协程
+            loop = asyncio.get_event_loop()
             sk_all = Base(StockInfo, **{'db_status': 1}).findfilter()
             for i in sk_all:
                 if not Base(StockPrice, **{'code': i.code, 'trading_day': td_last}).findfilter():
-                    self.connection_redis.rpush(
-                        'SlowCow_List',
-                        json.dumps({'sid': i.id, 'td': td, 'td_last': td_last})
-                    )
+                    code_name = str(i.exchange).lower() + i.code
+                    tasks.append(asyncio.ensure_future(self.run(i.id, code_name)))
+                    print(i.code)
+
+            loop.run_until_complete(asyncio.wait(tasks))
+            loop.close()
 
         return Response({'HistoryDeals': 'data update node'})
 
-    def post(self, request):
-        data = request.data
-        if data:
-            self.close_day(data['sid'], data['td'], data['td_last'])
+    async def run(self, sid, code_name):
+        """运行"""
+        await self.close_day(sid, code_name)
 
-        return Response({'HistoryDeals': 'data update node'})
-
-    def close_day(self, sid, td, td_last):
+    def close_day(self, sid, code_name):
         """收盘数据"""
-        code_one = Base(StockInfo, **{'db_status': 1}).findone(sid)
         url = f'{settings.QT_URL1}appstock/app/fqkline/get?_var=kline_dayqfq&param=' \
-              f'{str(code_one.exchange).lower()}{code_one.code},day,{td},,320,qfq'
+              f'{code_name},day,{self.today.strftime("%Y-%m-%d")},,320,qfq'
         url_open = requests.get(url)
         url_info = url_open.text
         history_data = json.loads(url_info.split('=')[1])
         # 获取分价表
         day_data = []
-        if 'qfqday' in history_data['data'][str(code_one.exchange).lower() + code_one.code]:
-            day_data = history_data['data'][str(code_one.exchange).lower() + code_one.code]['qfqday']
-        elif 'day' in history_data['data'][str(code_one.exchange).lower() + code_one.code]:
-            day_data = history_data['data'][str(code_one.exchange).lower() + code_one.code]['day']
+        if 'qfqday' in history_data['data'][code_name]:
+            day_data = history_data['data'][code_name]['qfqday']
+        elif 'day' in history_data['data'][code_name]:
+            day_data = history_data['data'][code_name]['day']
         if day_data:
             for price in day_data:
-                if not Base(StockPrice, **{'code': code_one.code, 'trading_day': price[0]}).findfilter():
+                if not Base(StockPrice, **{'code': code_name[2:], 'trading_day': price[0]}).findfilter():
                     add_price = {
-                        'sk_info_id': code_one.id,
-                        'code': code_one.code,
+                        'sk_info_id': sid,
+                        'code': code_name[2:],
                         'trading_day': price[0],
                         'open': float(price[1]),
                         'close': float(price[2]),
@@ -84,32 +81,29 @@ class HistoryDealsViewSet(APIView):
                         'hand_number': eval(price[5])
                     }
                     Base(StockPrice, **add_price).save_db()
-
-        self.ma_day(str(code_one.exchange).lower(), code_one.code, td_last)
+                    self.ma_day(code_name, price[0])
 
     @staticmethod
-    def ma_day(exchange, code, trading_day):
+    def ma_day(code_name, trading_day):
         """日均线"""
-        code_price = Base(StockPrice, **{'code': code, 'trading_day': trading_day}).findfilter()
-        if code_price and code_price[0].average == 0:
-            url = f'{settings.QT_URL3}data/index.php?appn=price&c={exchange}{code}'
-            url_open = requests.get(url)
-            url_info = url_open.text
-            price_query = re.findall('".*"', url_info)
-            if price_query and price_query[0] != '""':
-                price_data = price_query[0][1:-1]
-                price_distribute = str(price_data).split('^')
-                price_distribute = [i.split('~') for i in price_distribute]
-                average, hand_number, active_number, bidding_rate = 0, 0, 0, 0
-                for i in price_distribute:
-                    average += float(i[0]) * eval(i[2])
-                    hand_number += eval(i[2])
-                    active_number += eval(i[1])
-                Base(StockPrice, **{'code': code, 'trading_day': trading_day}).update({
-                    'average': round(average / hand_number, 2),
-                    'active_number': active_number,
-                    'bidding_rate': round(active_number / hand_number, 2)
-                })
+        url = f'{settings.QT_URL3}data/index.php?appn=price&c={code_name}'
+        url_open = requests.get(url)
+        url_info = url_open.text
+        price_query = re.findall('".*"', url_info)
+        if price_query and price_query[0] != '""':
+            price_data = price_query[0][1:-1]
+            price_distribute = str(price_data).split('^')
+            price_distribute = [i.split('~') for i in price_distribute]
+            average, hand_number, active_number, bidding_rate = 0, 0, 0, 0
+            for i in price_distribute:
+                average += float(i[0]) * eval(i[2])
+                hand_number += eval(i[2])
+                active_number += eval(i[1])
+            Base(StockPrice, **{'code': code_name[2:], 'trading_day': trading_day}).update({
+                'average': round(average / hand_number, 2),
+                'active_number': active_number,
+                'bidding_rate': round(active_number / hand_number, 2)
+            })
 
 
 class MainFlowsViewSet(APIView):
