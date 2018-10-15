@@ -11,7 +11,7 @@ __all__ = ['SlowCowViewSet']
 
 
 class SlowCowViewSet(APIView):
-    """历史交易"""
+    """慢牛"""
 
     def get(self, request):
         """GET请求"""

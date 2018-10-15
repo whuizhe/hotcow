@@ -21,7 +21,8 @@ if __name__ == '__main__':
     scheduler = BlockingScheduler()
     scheduler.add_executor('processpool')
     scheduler.add_job(tick, trigger='cron', args=('basisdata/', ), hour='16,20', name='基础')
-    scheduler.add_job(tick, trigger='cron', args=('skoptional/slowcow/', ), hour='17,23', name='交易')
+    scheduler.add_job(tick, trigger='cron', args=('skoptional/historydeals/', ), hour='16,20', name='历史交易')
+    scheduler.add_job(tick, trigger='cron', args=('skoptional/mainflows/',), hour='17,21', name='资金流向')
 
     try:
         scheduler.start()
