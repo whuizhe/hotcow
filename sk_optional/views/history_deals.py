@@ -110,16 +110,23 @@ class MainFlowsViewSet(APIView):
 
     def get(self, request):
         """GET请求"""
+        data = request.GET
         sk_all = Base(StockInfo, **{'db_status': 1}).findfilter()
-        code_list = []
-        for i in sk_all:
-            code_list.append(f'{i.exchange}{i.code}'.lower())
-        times_number = 100
         tasks = []
-        for num in range(0, len(code_list) // times_number + 1):
-            url = f"{settings.QT_URL3}data/view/ggdx.php?t=3&d=5&q=" \
-                  f"{','.join(code_list[num * times_number:times_number * (num + 1)])}"
-            tasks.append(self._read_data(url))
+        if data:
+            for i in sk_all:
+                url = f"{settings.QT_URL3}data/view/ggdx.php?t=2&r=0.8876465514316253" \
+                      f"&q={str(i.exchange).lower()}{i.code}"
+                tasks.append(self._read_data(url, 'day'))
+        else:
+            code_list = []
+            for i in sk_all:
+                code_list.append(f'{i.exchange}{i.code}'.lower())
+            times_number = 100
+            for num in range(0, len(code_list) // times_number + 1):
+                url = f"{settings.QT_URL3}data/view/ggdx.php?t=3&d=5&q=" \
+                      f"{','.join(code_list[num * times_number:times_number * (num + 1)])}"
+                tasks.append(self._read_data(url, 'many_day'))
 
         asyncio.set_event_loop(asyncio.new_event_loop())  # 创建新的协程
         loop = asyncio.get_event_loop()
@@ -127,27 +134,32 @@ class MainFlowsViewSet(APIView):
         loop.close()
         return Response({'MainFlows': 'data update node'})
 
-    async def _read_data(self, url):
+    async def _read_data(self, url, num_day):
         async with aiohttp.ClientSession() as session:
             url_info = await HistoryDealsViewSet.fetch(session, url)
-            url_data = url_info.replace(';', '').replace('\'', '').split('\n')
-            for code in url_data:
-                amount_data = code.split('=')
-                if len(amount_data) != 2:
-                    continue
-                amount_date = amount_data[1].split('~')
-                amount_dict = {}
-                for i in amount_date:
-                    if '^' in i:
-                        index = amount_date.index(i)
-                        amount_dict[i.split('^')[0]] = (
-                            float(amount_date[index - 2]),
-                            float(amount_date[index - 1])
-                        )
-                code_price = Base(StockPrice, **{'code': amount_data[0].split('_')[-1][2:]}).findfilter()
-                if code_price:
-                    for price in code_price:
-                        if str(price.trading_day) in amount_dict and (price.main_amount == 0 or not price.main_amount):
-                                price.main_amount = amount_dict[str(price.trading_day)][0]
-                                price.loose_amount = amount_dict[str(price.trading_day)][1]
-                                price.save()
+            if num_day == 'num_day':
+                url_data = url_info.replace(';', '').replace('\'', '').split('\n')
+                for code in url_data:
+                    amount_data = code.split('=')
+                    if len(amount_data) != 2:
+                        continue
+                    amount_date = amount_data[1].split('~')
+                    amount_dict = {}
+                    for i in amount_date:
+                        if '^' in i:
+                            index = amount_date.index(i)
+                            amount_dict[i.split('^')[0]] = (
+                                float(amount_date[index - 2]),
+                                float(amount_date[index - 1])
+                            )
+                    code_price = Base(StockPrice, **{'code': amount_data[0].split('_')[-1][2:]}).findfilter()
+                    if code_price:
+                        for price in code_price:
+                            if str(price.trading_day) in amount_dict and (price.main_amount == 0 or not price.main_amount):
+                                    price.main_amount = amount_dict[str(price.trading_day)][0]
+                                    price.loose_amount = amount_dict[str(price.trading_day)][1]
+                                    price.save()
+            else:
+                url_data = url_info.replace(';', '')
+                amount_data = url_data.split('=')[1].replace('"', '').split('~')
+
