@@ -29,5 +29,6 @@ class SlowCowViewSet(APIView):
             code_all = Base(StockInfo, **{'db_status': 1}).findfilter()
             for i in code_all:
                 code_info = Base(StockPrice, **{'sk_info_id': i.id, 'trading_day__in': trading_day}).findfilter()
+
                 print(code_info)
                 return Response({'SlowCow': {}})
