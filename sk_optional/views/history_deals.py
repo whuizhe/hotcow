@@ -117,7 +117,7 @@ class MainFlowsViewSet(APIView):
         times_number = 100
         tasks = []
         for num in range(0, len(code_list) // times_number + 1):
-            url = f"{settings.QT_URL3}data/view/ggdx.php?t=3&d=18&q=" \
+            url = f"{settings.QT_URL3}data/view/ggdx.php?t=3&d=5&q=" \
                   f"{','.join(code_list[num * times_number:times_number * (num + 1)])}"
             tasks.append(self._read_data(url))
 
