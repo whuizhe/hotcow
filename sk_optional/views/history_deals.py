@@ -6,6 +6,7 @@ import datetime
 import asyncio
 import aiohttp
 from django.conf import settings
+from django.core.cache import cache
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -37,6 +38,7 @@ class HistoryDealsViewSet(APIView):
 
             tasks = []
             sk_all = Base(StockInfo, **{'db_status': 1}).findfilter()
+            # sk_all = cache.
             for i in sk_all:
                 if not Base(StockPrice, **{'code': i.code, 'trading_day': td_last}).findfilter():
                     code_name = str(i.exchange).lower() + i.code
