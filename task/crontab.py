@@ -20,9 +20,18 @@ def tick(url):
 if __name__ == '__main__':
     scheduler = BlockingScheduler()
     scheduler.add_executor('processpool')
-    scheduler.add_job(tick, trigger='cron', args=('basisdata/', ), hour='16,20', name='基础')
-    scheduler.add_job(tick, trigger='cron', args=('skoptional/historydeals/', ), hour='16,18', name='历史交易')
-    scheduler.add_job(tick, trigger='cron', args=('skoptional/mainflows/',), hour='17,19', name='资金流向')
+    scheduler.add_job(
+        tick, trigger='cron', args=('basisdata/', ), hour='23, 5', name='基础'
+    )
+    scheduler.add_job(
+        tick, trigger='cron', args=('skoptional/historydeals/', ), hour='16,19', minute='30', name='历史交易'
+    )
+    scheduler.add_job(
+        tick, trigger='cron', args=('skoptional/mainflows/',), hour='3,6', name='资金流向历史'
+    )
+    scheduler.add_job(
+        tick, trigger='cron', args=('skoptional/mainflows/?code=1', ), hour='16,19', minute='50', name='资金流向当天'
+    )
 
     try:
         scheduler.start()

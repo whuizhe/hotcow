@@ -5,6 +5,7 @@ import time
 import requests
 import datetime
 from django.conf import settings
+from django.core.cache import cache
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -70,6 +71,21 @@ class BasisDataViewSet(APIView):
                     query_code[0].total_equity = round(float(code_price_info[-9]) / float(code_price_info[3]), 3)
                     query_code[0].circulate_equity = round(float(code_price_info[-10]) / float(code_price_info[3]), 3)
                     query_code[0].save()
+
+            # 缓存数据到redis
+            code_all = Base(StockInfo, **{'db_status': 1}).findfilter()
+            for codes in code_all:
+                code_dict = {
+                    'exchange': codes.exchange,
+                    'code': codes.code,
+                    'circulate_equity': codes.circulate_equity,
+                    'new': codes.new
+                }
+                cache.set(
+                    f'cache_code_info_{str(codes.exchange).lower()}~{codes.code}',
+                    code_dict,
+                    timeout=24 * 60 * 60
+                )
 
         return Response({"BasisData": {"Status": 1, "msg": "Basis data update node"}})
 

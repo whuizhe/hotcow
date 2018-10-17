@@ -113,11 +113,11 @@ class MainFlowsViewSet(APIView):
         data = request.GET
         sk_all = Base(StockInfo, **{'db_status': 1}).findfilter()
         tasks = []
-        if data:
+        if data and 'code' in data:
             for i in sk_all:
                 url = f"{settings.QT_URL3}data/view/ggdx.php?t=2&r=0.8876465514316253" \
                       f"&q={str(i.exchange).lower()}{i.code}"
-                tasks.append(self._read_data(url, 'day'))
+                tasks.append(self._read_data(url, 'day', code=i.code))
         else:
             code_list = []
             for i in sk_all:
@@ -134,7 +134,7 @@ class MainFlowsViewSet(APIView):
         loop.close()
         return Response({'MainFlows': 'data update node'})
 
-    async def _read_data(self, url, num_day):
+    async def _read_data(self, url, num_day, **kwargs):
         async with aiohttp.ClientSession() as session:
             url_info = await HistoryDealsViewSet.fetch(session, url)
             if num_day == 'num_day':
@@ -162,4 +162,7 @@ class MainFlowsViewSet(APIView):
             else:
                 url_data = url_info.replace(';', '')
                 amount_data = url_data.split('=')[1].replace('"', '').split('~')
-
+                Base(StockPrice, **{'code': kwargs.get('code'), 'trading_day': str(datetime.date.today())}).update({
+                    'main_amount': amount_data[2],
+                    'loose_amount': amount_data[5]
+                })
