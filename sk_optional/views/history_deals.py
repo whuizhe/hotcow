@@ -119,7 +119,7 @@ class MainFlowsViewSet(APIView):
                 code = str(i).split('_')[-1]
                 url = f"{settings.QT_URL3}data/view/ggdx.php?t=2&r=0.8876465514316253" \
                       f"&q={code.replace('~', '')}"
-                tasks.append(self._read_data(url, 'day', code=code.split('~')[-1]))
+                tasks.append(self._read_data(url=url, num_day='day', code=code.split('~')[-1]))
         else:
             code_list = []
             for i in sk_all:
@@ -128,7 +128,7 @@ class MainFlowsViewSet(APIView):
             for num in range(0, len(code_list) // times_number + 1):
                 url = f"{settings.QT_URL3}data/view/ggdx.php?t=3&d=5&q=" \
                       f"{','.join(code_list[num * times_number:times_number * (num + 1)])}"
-                tasks.append(self._read_data(url, 'many_day'))
+                tasks.append(self._read_data(url=url, num_day='many_day'))
 
         asyncio.set_event_loop(asyncio.new_event_loop())  # 创建新的协程
         loop = asyncio.get_event_loop()
@@ -139,7 +139,7 @@ class MainFlowsViewSet(APIView):
     async def _read_data(self, url, num_day, **kwargs):
         async with aiohttp.ClientSession() as session:
             url_info = await HistoryDealsViewSet.fetch(session, url)
-            if num_day == 'num_day':
+            if num_day == 'many_day':
                 url_data = url_info.replace(';', '').replace('\'', '').split('\n')
                 for code in url_data:
                     amount_data = code.split('=')
