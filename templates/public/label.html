@@ -1,0 +1,21 @@
+{% extends "public/header.html" %}
+{% block header %}
+    <div id="wrapper">
+        <div style="min-height: 591px;" class="gray-bg">
+        {% block info %}{% endblock %}
+        </div>
+    </div>
+
+    <!-- Mainly scripts -->
+    <script src="/static/components/js/jquery-2.2.3.min.js"></script>
+    <script src="/static/components/js/bootstrap.min.js"></script>
+    <script src="/static/components/js/plugins/slimscroll/jquery.slimscroll.min.js"></script>
+    <script src="/static/components/js/plugins/select2/select2.full.min.js"></script>
+    <script src="/static/js/main-20170711.js"></script>
+    <!-- Custom and plugin javascript -->
+    <script src="/static/components/js/inspinia.js"></script>
+    <script src="/static/components/js/plugins/pace/pace.min.js"></script>
+    <script src="/static/components/js/plugins/sweetalert/sweetalert.min.js"></script>
+    <script type="text/javascript" src="/static/components/layer/layer.js"></script>
+    {% block js %}{% endblock %}
+{% endblock %}

@@ -1,69 +1,61 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>TQ</title>
-</head>
-<body>
+{% extends "public/label.html" %}
+
+{% block headcss %}{% endblock %}
+{% block info %}
     <div class="row">
-                <div class="col-lg-6">
-                <div class="ibox float-e-margins">
-                    <div class="ibox-title">
-                        <h5>{{ code }}</h5>
-                        <div class="ibox-tools">
-                            <a class="collapse-link">
-                                <i class="fa fa-chevron-up"></i>
-                            </a>
-                            <a class="dropdown-toggle" data-toggle="dropdown" href="table_basic.html#">
-                                <i class="fa fa-wrench"></i>
-                            </a>
-                            <ul class="dropdown-menu dropdown-user">
-                                <li><a href="table_basic.html#">Config option 1</a>
-                                </li>
-                                <li><a href="table_basic.html#">Config option 2</a>
-                                </li>
-                            </ul>
-                            <a class="close-link">
-                                <i class="fa fa-times"></i>
-                            </a>
-                        </div>
-                    </div>
-                    <div class="ibox-content">
-
-                        <table class="table">
-                            <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>First Name</th>
-                                <th>Last Name</th>
-                                <th>Username</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <tr>
-                                <td>1</td>
-                                <td>Mark</td>
-                                <td>Otto</td>
-                                <td>@mdo</td>
-                            </tr>
-                            <tr>
-                                <td>2</td>
-                                <td>Jacob</td>
-                                <td>Thornton</td>
-                                <td>@fat</td>
-                            </tr>
-                            <tr>
-                                <td>3</td>
-                                <td>Larry</td>
-                                <td>the Bird</td>
-                                <td>@twitter</td>
-                            </tr>
-                            </tbody>
-                        </table>
-
-                    </div>
+        <div class="col-lg-6">
+            <div class="ibox float-e-margins">
+                <h5>历史</h5>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title">
+                    <h5>Code: {{ code }}({{ code_name }})</h5>
+                </div>
+                <div class="ibox-content">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>交易日</th>
+                            <th>开盘</th>
+                            <th>收盘</th>
+                            <th>最高</th>
+                            <th>最底</th>
+                            <th>均价</th>
+                            <th>交易量(亿)</th>
+                            <th>换手率</th>
+                            <th>主买率</th>
+                            <th>主净流入(万)</th>
+                            <th>散净流入(万)</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for i in param %}
+                        <tr>
+                            <td>{{ i.trading_day }}</td>
+                            <td>{{ i.open }}</td>
+                            <td>{{ i.close }}</td>
+                            <td>{{ i.high }}</td>
+                            <td>{{ i.low }}</td>
+                            <td>{{ i.average }}</td>
+                            <td>{{ i.hand_number }}</td>
+                            <td>{{ i.turnover_rate }}</td>
+                            <td>{{ i.bidding_rate }}</td>
+                            <td>{{ i.main_amount }}</td>
+                            <td>{{ i.loose_amount }}</td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
-            </div>
-</body>
-</html>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js %}
+
+{% endblock %}
