@@ -76,10 +76,11 @@ class BasisDataViewSet(APIView):
             code_all = Base(StockInfo, **{'db_status': 1}).findfilter()
             for codes in code_all:
                 code_dict = {
-                    'exchange': codes.exchange,
+                    'exchange': f'{str(codes.exchange).lower()}{codes.code}',
                     'code': codes.code,
                     'circulate_equity': codes.circulate_equity,
-                    'new': codes.new
+                    'new': codes.new,
+                    'sid': codes.id
                 }
                 cache.set(
                     f'cache_code_info_{str(codes.exchange).lower()}~{codes.code}',

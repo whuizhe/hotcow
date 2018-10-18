@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from extends import Base, ts_api
-from basicdata.models import *
+from basicdata.models import StockPrice
 
 __all__ = ['HistoryDealsViewSet', 'MainFlowsViewSet']
 
@@ -37,12 +37,11 @@ class HistoryDealsViewSet(APIView):
             )  # 最近历史交易日
 
             tasks = []
-            sk_all = Base(StockInfo, **{'db_status': 1}).findfilter()
-            # sk_all = cache.
+            sk_all = cache.iter_keys('cache_code_info_*')
             for i in sk_all:
-                if not Base(StockPrice, **{'code': i.code, 'trading_day': td_last}).findfilter():
-                    code_name = str(i.exchange).lower() + i.code
-                    tasks.append(self._close_day(i.id, code_name))
+                code = cache.get(i)
+                if not Base(StockPrice, **{'code': code['code'], 'trading_day': td_last}).findfilter():
+                    tasks.append(self._close_day(code['sid'], code['exchange']))
 
             asyncio.set_event_loop(asyncio.new_event_loop())  # 创建新的协程
             loop = asyncio.get_event_loop()
@@ -113,17 +112,18 @@ class MainFlowsViewSet(APIView):
     def get(self, request):
         """GET请求"""
         data = request.GET
-        sk_all = Base(StockInfo, **{'db_status': 1}).findfilter()
         tasks = []
+        sk_all = cache.iter_keys('cache_code_info_*')
         if data and 'code' in data:
             for i in sk_all:
+                code = str(i).split('_')[-1]
                 url = f"{settings.QT_URL3}data/view/ggdx.php?t=2&r=0.8876465514316253" \
-                      f"&q={str(i.exchange).lower()}{i.code}"
-                tasks.append(self._read_data(url, 'day', code=i.code))
+                      f"&q={code.replace('~', '')}"
+                tasks.append(self._read_data(url, 'day', code=code.split('~')[-1]))
         else:
             code_list = []
             for i in sk_all:
-                code_list.append(f'{i.exchange}{i.code}'.lower())
+                code_list.append(str(i).split('_')[-1].replace('~', ''))
             times_number = 100
             for num in range(0, len(code_list) // times_number + 1):
                 url = f"{settings.QT_URL3}data/view/ggdx.php?t=3&d=5&q=" \
