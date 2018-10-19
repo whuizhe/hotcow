@@ -1,6 +1,5 @@
 {% extends "public/label.html" %}
 {% block headcss %}
-    <script src="/static/components/js/plugins/echarts/echarts.min.js"></script>
 {% endblock %}
 {% block info %}
     <div class="row wrapper border-bottom white-bg page-heading">
@@ -85,6 +84,7 @@
 {% endblock %}
 
 {% block js %}
+    <script src="/static/components/js/plugins/echarts/echarts.min.js"></script>
     <script type="text/javascript">
         var dom = document.getElementById("container");
         var myChart = echarts.init(dom);
