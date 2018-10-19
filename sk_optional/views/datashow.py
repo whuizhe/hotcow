@@ -81,7 +81,6 @@ class DataShowViewSet(View):
         url_info = url_open.text
         if url_info:
             money_flow = url_info.replace(';', '').split('=')[1].replace('"', '').split('~')
-            print(money_flow)
             for i in money_flow:
                 if ':' in i:
                     index = money_flow.index(i)
@@ -90,7 +89,6 @@ class DataShowViewSet(View):
                     flow_data['retail']['out'].append(float(money_flow[index - 2]))
                     flow_data['main']['into'].append(float(money_flow[index - 4]))
                     flow_data['main']['out'].append(float(money_flow[index - 5]))
-                    print(flow_data)
         flow_data['time_data'].reverse()
         flow_data['retail']['into'].reverse()
         flow_data['retail']['out'].reverse()
