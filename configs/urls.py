@@ -19,7 +19,7 @@ from basicdata.views import BasisDataViewSet
 from sk_optional import urls as sk_optional_url
 
 def http404(request):
-    return HttpResponse('<h1>404</h1>')
+    return HttpResponse('404', status=404)
 
 urlpatterns = [
     path('basisdata/', BasisDataViewSet.as_view(), name='获取基础数据'),
