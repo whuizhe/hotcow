@@ -98,21 +98,21 @@ $(document).ready(function () {
 
     // Append config box / Only for demo purpose
     // Uncomment on server mode to enable XHR calls
-    $.ajax({
-        url: "/skinconfig/",
-        type: 'get',
-        success: function (data) {
-            if (!$('body').hasClass('theme-config')){
-                $('body').append(data);
-            }
-        },
-        error: function(){
-            console.log('无法加载工具栏！');
-        },
-        complete:function(){
-            return false;
-        }
-    });
+    // $.ajax({
+    //     url: "/skinconfig/",
+    //     type: 'get',
+    //     success: function (data) {
+    //         if (!$('body').hasClass('theme-config')){
+    //             $('body').append(data);
+    //         }
+    //     },
+    //     error: function(){
+    //         console.log('无法加载工具栏！');
+    //     },
+    //     complete:function(){
+    //         return false;
+    //     }
+    // });
 
     // Minimalize menu
     $('.navbar-minimalize').click(function () {
