@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """历史交易"""
 import datetime
+import requests
 from django.views.generic import View
 from django.shortcuts import render
 
@@ -47,13 +48,47 @@ class DataShowViewSet(View):
                     'loose_amount': i.loose_amount,
                 })
 
-
             code_info = Base(StockInfo, **{'db_status': 1, 'code': data['code']}).findfilter()
-            context = {
-                'param': code_data,
-                'code': data['code'],
-                'code_name': code_info[0].name
-            }
-            return render(request, 'sk_optional/datashow.html', context)
+            if code_info:
+                context = {
+                    'param': code_data,
+                    'code': data['code'],
+                    'code_name': code_info[0].name,
+                    'flow_data': self.money_flow(f'{str(code_info[0].exchange).lower()}{data["code"]}')
+                }
+                return render(request, 'sk_optional/datashow.html', context)
 
-        return render(request, 'sk_optional/datashow.html')
+        return render(request, 'sk_optional/datashow.html', {'code_name': '无数据,请输入正确的代码'})
+
+    @staticmethod
+    def money_flow(code):
+        flow_data = {
+            'time_data': [],
+            'main': {  # 主力
+                'into': [],
+                'out': []
+            },
+            'retail': {  # 散户
+                'into': [],
+                'out': []
+            }
+        }
+        url = f'http://stock.gtimg.cn/data/view/ggdx.php?t=2&q={code}&r=0.6197422606657409'
+        url_open = requests.get(url)
+        url_info = url_open.text
+        if url_info:
+            money_flow = url_info.replace(';', '').split('=')[1].replace('"', '').split('~')
+            for i in money_flow:
+                if ':' in i:
+                    index = money_flow.index(i)
+                    flow_data['time_data'].append(str(i.split('^')[0][:-3]))
+                    flow_data['retail']['into'].append(float(money_flow[index - 1]))
+                    flow_data['retail']['out'].append(float(money_flow[index - 2]))
+                    flow_data['main']['into'].append(float(money_flow[index - 4]))
+                    flow_data['main']['out'].append(float(money_flow[index - 5]))
+        flow_data['time_data'].reverse()
+        flow_data['retail']['into'].reverse()
+        flow_data['retail']['out'].reverse()
+        flow_data['main']['into'].reverse()
+        flow_data['main']['out'].reverse()
+        return flow_data
