@@ -22,27 +22,34 @@ class HistoryDealsViewSet(APIView):
 
     def get(self, request):
         """GET请求"""
-        trading_day = ts_api(
-            api_name='trade_cal',
-            params={
-                'is_open': 1,
-                'start_date': (self.today - datetime.timedelta(days=10)).strftime('%Y%m%d'),
-                'end_date': self.today.strftime('%Y%m%d')
-            },
-            fields=['cal_date', 'is_open']
-        )
-        if trading_day:
-            td_last = datetime.datetime.strftime(
-                datetime.datetime.strptime(trading_day[-1][0], '%Y%m%d'), '%Y-%m-%d'
-            )  # 最近历史交易日
+        data = request.GET
+        tasks = []
+        sk_all = cache.iter_keys('cache_code_info_*')
 
-            tasks = []
-            sk_all = cache.iter_keys('cache_code_info_*')
+        if data and 'average' in data:
             for i in sk_all:
                 code = cache.get(i)
-                if not Base(StockPrice, **{'code': code['code'], 'trading_day': td_last}).findfilter():
-                    tasks.append(self._close_day(code['sid'], code['exchange']))
+                tasks.append(self._close_day(code['sid'], code['exchange']))
+        else:
+            trading_day = ts_api(
+                api_name='trade_cal',
+                params={
+                    'is_open': 1,
+                    'start_date': (self.today - datetime.timedelta(days=10)).strftime('%Y%m%d'),
+                    'end_date': self.today.strftime('%Y%m%d')
+                },
+                fields=['cal_date', 'is_open']
+            )
+            if trading_day:
+                td_last = datetime.datetime.strftime(
+                    datetime.datetime.strptime(trading_day[-1][0], '%Y%m%d'), '%Y-%m-%d'
+                )  # 最近历史交易日
+                for i in sk_all:
+                    code = cache.get(i)
+                    if not Base(StockPrice, **{'code': code['code'], 'trading_day': td_last}).findfilter():
+                        tasks.append(self._close_day(code['sid'], code['exchange']))
 
+        if tasks:
             asyncio.set_event_loop(asyncio.new_event_loop())  # 创建新的协程
             loop = asyncio.get_event_loop()
             loop.run_until_complete(asyncio.wait(tasks))
@@ -82,7 +89,6 @@ class HistoryDealsViewSet(APIView):
                             'hand_number': eval(price[5])
                         }
                         Base(StockPrice, **add_price).save_db()
-                        await self._ma_day(code_name, price[0])
 
     async def _ma_day(self, code_name, trading_day):
         """日均线"""
