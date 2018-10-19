@@ -24,30 +24,30 @@ class HistoryDealsViewSet(APIView):
         """GET请求"""
         data = request.GET
         tasks = []
+        trading_day = ts_api(
+            api_name='trade_cal',
+            params={
+                'is_open': 1,
+                'start_date': (self.today - datetime.timedelta(days=10)).strftime('%Y%m%d'),
+                'end_date': self.today.strftime('%Y%m%d')
+            },
+            fields=['cal_date', 'is_open']
+        )
+        td_last = datetime.datetime.strftime(
+            datetime.datetime.strptime(trading_day[-1][0], '%Y%m%d'), '%Y-%m-%d'
+        )  # 最近历史交易日
+        print(td_last)
         sk_all = cache.iter_keys('cache_code_info_*')
 
         if data and 'average' in data:
             for i in sk_all:
                 code = cache.get(i)
-                tasks.append(self._close_day(code['sid'], code['exchange']))
+                tasks.append(self._ma_day(code['exchange'], td_last))
         else:
-            trading_day = ts_api(
-                api_name='trade_cal',
-                params={
-                    'is_open': 1,
-                    'start_date': (self.today - datetime.timedelta(days=10)).strftime('%Y%m%d'),
-                    'end_date': self.today.strftime('%Y%m%d')
-                },
-                fields=['cal_date', 'is_open']
-            )
-            if trading_day:
-                td_last = datetime.datetime.strftime(
-                    datetime.datetime.strptime(trading_day[-1][0], '%Y%m%d'), '%Y-%m-%d'
-                )  # 最近历史交易日
-                for i in sk_all:
-                    code = cache.get(i)
-                    if not Base(StockPrice, **{'code': code['code'], 'trading_day': td_last}).findfilter():
-                        tasks.append(self._close_day(code['sid'], code['exchange']))
+            for i in sk_all:
+                code = cache.get(i)
+                if not Base(StockPrice, **{'code': code['code'], 'trading_day': td_last}).findfilter():
+                    tasks.append(self._close_day(code['sid'], code['exchange']))
 
         if tasks:
             asyncio.set_event_loop(asyncio.new_event_loop())  # 创建新的协程
