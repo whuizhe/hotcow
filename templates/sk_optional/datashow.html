@@ -186,7 +186,7 @@
         // 指定图表的配置项和数据
         var option = {
             title: {
-                text: '进出累计(万)'
+                text: '资金统计(万)'
             },
             color: colors,
             xAxis: [
@@ -203,6 +203,7 @@
                 label: {
                     normal: {
                         show: true,
+                        position: 'top',
                     }
                 },
                 data: {{ total_flow.into }}
@@ -213,6 +214,7 @@
                 label: {
                     normal: {
                         show: true,
+                        position: 'top',
                     }
                 },
                 data: {{ total_flow.out }}

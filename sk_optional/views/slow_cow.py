@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """慢牛"""
 import datetime
+from django.core.cache import cache
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -13,49 +14,106 @@ __all__ = ['SlowCowViewSet']
 
 class SlowCowViewSet(APIView):
     """慢牛"""
+    trading_day = ts_api(
+        api_name='trade_cal',
+        params={
+            'is_open': 1,
+            'start_date': (datetime.date.today() - datetime.timedelta(days=30)).strftime('%Y%m%d'),
+            'end_date': datetime.date.today().strftime('%Y%m%d')
+        },
+        fields=['cal_date', 'is_open']
+    )
+    trading_day = [
+        str(datetime.datetime.strptime(i[0], '%Y%m%d')).split(' ')[0] for i in trading_day[-15:]
+    ]
+    trading_day.reverse()
+    code_dict = {
+        'continuous_up': {},
+        'analysis': []
+    }
 
     def get(self, request):
         """GET请求"""
-        trading_day = ts_api(
-            api_name='trade_cal',
-            params={
-                'is_open': 1,
-                'start_date': (datetime.date.today() - datetime.timedelta(days=30)).strftime('%Y%m%d'),
-                'end_date': datetime.date.today().strftime('%Y%m%d')
-            },
-            fields=['cal_date', 'is_open']
-        )
-        if trading_day:
-            trading_day = [
-                str(datetime.datetime.strptime(i[0], '%Y%m%d')).split(' ')[0] for i in trading_day[-15:]
-            ]
-            trading_day.reverse()
-            code_dict = {
-                's3': {},  # 上3天
-                's2': {},  # 上2天
-                'm': {},  # 满
-                'x': {},  # 下,放量
-            }
+        if self.trading_day:
             code_all = Base(StockInfo, **{'db_status': 1}).findfilter()
             for i in code_all:
-                ma_5, ma_10, day_data = 0, 0, {}
-                code_info = Base(StockPrice, **{'sk_info_id': i.id, 'trading_day__in': trading_day}).findfilter()
-                code_serializers = StockPriceSerializer(code_info, many=True)
-                for day in code_serializers.data:
-                    day_data[day['trading_day']] = day
+                day_data = self._read_data(sid=i.id)
+                # 连接上涨
+                self._continuous_up(day_data)
+            # 主散流入
+            self._trading_volume()
+            # 量能分析
+            # self._quantity_energy()
+            # cache.set(
+            #     f'code_analysis_data_{datetime.date.today().strftime("%Y-%m-%d")}',
+            #     self.code_dict,
+            #     timeout=None
+            # )
+            return Response({'SlowCow': self.code_dict, 'trading_day': self.trading_day})
 
-                num = 0
-                try:
-                    if day_data[trading_day[num]]['close'] >= day_data[trading_day[num + 1]]['close']:
-                        if day_data[trading_day[num + 1]]['close'] >= day_data[trading_day[num + 2]]['close']:
-                            code_dict['s2'][i.code] = {
+    def _read_data(self, sid=None, code=None):
+        """读取code数据"""
+        day_data = {}
+        if sid:
+            code_info = Base(StockPrice, **{'sk_info_id': sid, 'trading_day__in': self.trading_day}).findfilter()
+        else:
+            code_info = Base(StockPrice, **{'code': code, 'trading_day__in': self.trading_day}).findfilter()
+        code_serializers = StockPriceSerializer(code_info, many=True)
+        for day in code_serializers.data:
+            day_data[day['trading_day']] = day
+        return day_data
 
-                            }
-                            if day_data[trading_day[num + 2]]['close'] >= day_data[trading_day[num + 3]]['close']:
-                                code_dict['s3'][i.code] = {
+    def _continuous_up(self, day_data):
+        """连续上涨"""
+        try:
+            am5 = self._am(5, day_data)
+            # 上涨 大于5日均线 交易量大于5kw
+            if day_data[self.trading_day[0]]['close'] >= day_data[self.trading_day[1]]['close'] and \
+                    day_data[self.trading_day[0]]['close'] >= am5 and \
+                    day_data[self.trading_day[0]]['hand_number'] * day_data[self.trading_day[0]]['average'] >= 500000:
+                for i in range(2, 21):
+                    if day_data[self.trading_day[i - 1]]['close'] >= day_data[self.trading_day[i]]['close']:
+                        if i not in self.code_dict['continuous_up']:
+                            self.code_dict['continuous_up'][i] = []
+                        self.code_dict['continuous_up'][i].append(day_data[self.trading_day[0]]['code'])
+                        if i != 2:
+                            for m in range(2, i):
+                                if day_data[self.trading_day[0]]['code'] in self.code_dict['continuous_up'][m]:
+                                    self.code_dict['continuous_up'][m].remove(day_data[self.trading_day[0]]['code'])
+                    else:
+                        break
+        except KeyError:
+            pass
 
-                                }
-                except KeyError:
-                    pass
+    def _am(self, few_day: int, day_dat):
+        """均线"""
+        am = 0
+        for i in range(0, few_day):
+            am += day_dat[self.trading_day[i]]['average']
+        return round(am / few_day, 2)
 
-            return Response({'SlowCow': code_dict})
+    def _quantity_energy(self):
+        """量能分析"""
+        for keys in self.code_dict['continuous_up']:
+            for code in self.code_dict['continuous_up'][keys]:
+                day_data = self._read_data(code=code)
+
+
+    def _trading_volume(self):
+        """主散流入"""
+        for keys in self.code_dict['continuous_up']:
+            for code in self.code_dict['continuous_up'][keys]:
+                day_data = self._read_data(code=code)
+                main_amount, loose_amount = 0, 0
+                for i in self.trading_day[:int(keys)]:
+                    main_amount += day_data[i]['main_amount']
+                    loose_amount += day_data[i]['loose_amount']
+                if main_amount <= 100 and code in self.code_dict['continuous_up']:
+                    self.code_dict['continuous_up'].pop(code)
+                    continue
+                if main_amount >=200 and loose_amount >= 100:
+                    self.code_dict['analysis'].append({
+                        'code': code,
+                        'up': keys,
+                        'amount': '>200W'
+                    })
