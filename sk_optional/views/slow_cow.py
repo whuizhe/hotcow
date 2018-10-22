@@ -29,7 +29,8 @@ class SlowCowViewSet(APIView):
     trading_day.reverse()
     code_dict = {
         'continuous_up': {},
-        'analysis': []
+        'zl': [],
+        'zl_1': []
     }
 
     def get(self, request):
@@ -104,16 +105,24 @@ class SlowCowViewSet(APIView):
         for keys in self.code_dict['continuous_up']:
             for code in self.code_dict['continuous_up'][keys]:
                 day_data = self._read_data(code=code)
-                main_amount, loose_amount = 0, 0
+                main_amount, loose_amount, status = 0, 0, 1
                 for i in self.trading_day[:int(keys)]:
+                    if day_data[i]['main_amount'] < 0:
+                        status = 0
                     main_amount += day_data[i]['main_amount']
                     loose_amount += day_data[i]['loose_amount']
                 if main_amount <= 100 and code in self.code_dict['continuous_up']:
                     self.code_dict['continuous_up'].pop(code)
                     continue
-                if main_amount >=200 and loose_amount >= 100:
-                    self.code_dict['analysis'].append({
+                # 主力正向流入
+                if status == 1:
+                    self.code_dict['zl'].append({
                         'code': code,
                         'up': keys,
-                        'amount': '>200W'
                     })
+                    # 散户流出小于主力流入的0.6
+                    if loose_amount < 0 and round(main_amount / (0 - loose_amount), 1) <= 0.6:
+                        self.code_dict['zl_1'].append({
+                            'code': code,
+                            'up': keys,
+                        })
