@@ -36,7 +36,6 @@ class HistoryDealsViewSet(APIView):
         td_last = datetime.datetime.strftime(
             datetime.datetime.strptime(trading_day[-1][0], '%Y%m%d'), '%Y-%m-%d'
         )  # 最近历史交易日
-        print(td_last)
         sk_all = cache.iter_keys('cache_code_info_*')
 
         if data and 'average' in data:
