@@ -36,6 +36,10 @@ class SlowCowViewSet(APIView):
     def get(self, request):
         """GET请求"""
         if self.trading_day:
+            redis_keys = f'code_analysis_data_{datetime.date.today().strftime("%Y-%m-%d")}'
+            read_cache = cache.get(redis_keys)
+            if read_cache:
+                return Response({'SlowCow': read_cache, 'trading_day': self.trading_day})
             code_all = Base(StockInfo, **{'db_status': 1}).findfilter()
             for i in code_all:
                 day_data = self._read_data(sid=i.id)
@@ -44,12 +48,12 @@ class SlowCowViewSet(APIView):
             # 主散流入
             self._trading_volume()
             # 量能分析
-            # self._quantity_energy()
-            # cache.set(
-            #     f'code_analysis_data_{datetime.date.today().strftime("%Y-%m-%d")}',
-            #     self.code_dict,
-            #     timeout=None
-            # )
+            self._quantity_energy()
+            cache.set(
+                redis_keys,
+                self.code_dict,
+                timeout=None
+            )
             return Response({'SlowCow': self.code_dict, 'trading_day': self.trading_day})
 
     def _read_data(self, sid=None, code=None):
