@@ -10,7 +10,7 @@ from django.core.cache import cache
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from extends import Base, ts_api
+from extends import Base, trading_day
 from basicdata.models import StockPrice
 
 __all__ = ['HistoryDealsViewSet', 'MainFlowsViewSet']
@@ -18,26 +18,13 @@ __all__ = ['HistoryDealsViewSet', 'MainFlowsViewSet']
 
 class HistoryDealsViewSet(APIView):
     """历史交易"""
-    today = datetime.date.today()
 
     def get(self, request):
         """GET请求"""
         data = request.GET
-        tasks = []
-        trading_day = ts_api(
-            api_name='trade_cal',
-            params={
-                'is_open': 1,
-                'start_date': (self.today - datetime.timedelta(days=10)).strftime('%Y%m%d'),
-                'end_date': self.today.strftime('%Y%m%d')
-            },
-            fields=['cal_date', 'is_open']
-        )
-        td_last = datetime.datetime.strftime(
-            datetime.datetime.strptime(trading_day[-1][0], '%Y%m%d'), '%Y-%m-%d'
-        )  # 最近历史交易日
+        td_last = trading_day(2)[0]
         sk_all = cache.iter_keys('cache_code_info_*')
-
+        tasks = []
         if data and 'average' in data:
             for i in sk_all:
                 code = cache.get(i)
@@ -64,7 +51,7 @@ class HistoryDealsViewSet(APIView):
     async def _close_day(self, sid, code_name):
         """收盘数据"""
         url = f'{settings.QT_URL1}appstock/app/fqkline/get?_var=kline_dayqfq&param=' \
-              f'{code_name},day,{self.today.strftime("%Y-%m-%d")},,320,qfq'
+              f'{code_name},day,{datetime.date.today().strftime("%Y-%m-%d")},,320,qfq'
         async with aiohttp.ClientSession() as session:
             url_info = await self.fetch(session, url)
             history_data = json.loads(url_info.split('=')[1])
@@ -162,7 +149,8 @@ class MainFlowsViewSet(APIView):
                     code_price = Base(StockPrice, **{'code': amount_data[0].split('_')[-1][2:]}).findfilter()
                     if code_price:
                         for price in code_price:
-                            if str(price.trading_day) in amount_dict and (price.main_amount == 0 or not price.main_amount):
+                            if str(price.trading_day) in amount_dict and\
+                                    (price.main_amount == 0 or not price.main_amount):
                                     price.main_amount = amount_dict[str(price.trading_day)][0]
                                     price.loose_amount = amount_dict[str(price.trading_day)][1]
                                     price.save()

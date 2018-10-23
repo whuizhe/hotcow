@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """基础数据获取"""
 import re
-import time
 import requests
 import datetime
 from django.conf import settings
@@ -89,62 +88,3 @@ class BasisDataViewSet(APIView):
                 )
 
         return Response({"BasisData": {"Status": 1, "msg": "Basis data update node"}})
-
-    @staticmethod
-    def query_concept(code: str):
-        """所属概念"""
-        url = f'http://web.ifzq.gtimg.cn/stock/relate/data/plate?code={code}'
-        open_url = requests.get(url)
-        concept_info = open_url.json()
-        if concept_info['code'] == 0:
-            print(concept_info)
-
-    def quert_concept_ths(self):
-        """同花顺概念"""
-        concept_dict = []
-        url = "http://q.10jqka.com.cn/gn/"
-        open_url = requests.get(url, headers=self.headers)
-        if open_url.status_code == 200:
-            find_concept = re.findall('<a href="http://q.10jqka.com.cn/gn/detail/code/.*</a>', open_url.text)
-            for i in find_concept:
-                find_name = re.findall(
-                    '<a href="http://q.10jqka.com.cn/gn/detail/code/(\d+)/" target="_blank">(.*)</a>',
-                    i
-                )
-                if find_name:
-                    self.code_list = []
-                    time.sleep(2)
-                    concept_code = self.code_quert_concept_ths(find_name[0][0], 1)
-                    if concept_code:
-                        print(concept_code)
-                        for c in list(set(concept_code)):
-                            if c not in concept_dict:
-                                continue
-                            concept_dict[c]['info']['concept'].append(find_name[0][1])
-
-    def code_quert_concept_ths(self, concept_code, page):
-        """
-        同花顺概念code查询
-        :param concept_code: 概念码
-        :param page: 页码
-        :return:
-        """
-        url = f'http://q.10jqka.com.cn/gn/detail/field/264648/order/' \
-              f'desc/page/{page}/ajax/1/code/{concept_code}'
-        self.headers['Cookie'] = f'v=ApdyQuWBgEwgOATAzCzWcxZyIArg3Gs-RbDvsunEs2bNGLm48az7jlWAfwP6;'
-        open_url = requests.get(url, headers=self.headers)
-        if open_url.status_code == 200:
-            url_info = open_url.text
-            self.code_list += re.findall(
-                '<td><a href="http://stockpage.10jqka.com.cn/(\d+)" target="_blank">.*</a></td>',
-                url_info
-            )
-            if page == 1:
-                all_page = re.findall(
-                    '<a class="changePage" page="(\d+)" href="javascript:void\(0\);">尾页',
-                    url_info
-                )
-                if all_page:
-                    for pages in range(2, int(all_page[0]) + 1):
-                        self.code_quert_concept_ths(concept_code, pages)
-        return self.code_list

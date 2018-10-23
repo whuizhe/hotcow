@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 """历史交易"""
-import datetime
 import requests
 from django.conf import settings
 from django.views.generic import View
 from django.shortcuts import render
 
-from extends import Base, ts_api
+from extends import Base, trading_day
 from basicdata.models import StockInfo, StockPrice
 
 __all__ = ['DataShowViewSet']
@@ -19,21 +18,8 @@ class DataShowViewSet(View):
         """GET请求"""
         data = request.GET
         if data and 'code' in data:
-            trading_day = ts_api(
-                api_name='trade_cal',
-                params={
-                    'is_open': 1,
-                    'start_date': (datetime.date.today() - datetime.timedelta(days=10)).strftime('%Y%m%d'),
-                    'end_date': datetime.date.today().strftime('%Y%m%d')
-                },
-                fields=['cal_date', 'is_open']
-            )
-            if trading_day:
-                trading_day = [
-                    str(datetime.datetime.strptime(i[0], '%Y%m%d')).split(' ')[0] for i in trading_day[-15:]
-                ]
             code_data = []
-            code_query = Base(StockPrice, **{'code': data['code'], 'trading_day__in': trading_day}).findfilter()
+            code_query = Base(StockPrice, **{'code': data['code'], 'trading_day__in': trading_day(15)}).findfilter()
             for i in code_query:
                 code_data.append({
                     'open': i.open,

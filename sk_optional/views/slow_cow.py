@@ -5,7 +5,7 @@ from django.core.cache import cache
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from extends import Base, ts_api
+from extends import Base, trading_day
 from basicdata.models import StockInfo, StockPrice
 from basicdata.serializers import StockPriceSerializer
 
@@ -14,19 +14,7 @@ __all__ = ['SlowCowViewSet']
 
 class SlowCowViewSet(APIView):
     """慢牛"""
-    trading_day = ts_api(
-        api_name='trade_cal',
-        params={
-            'is_open': 1,
-            'start_date': (datetime.date.today() - datetime.timedelta(days=30)).strftime('%Y%m%d'),
-            'end_date': datetime.date.today().strftime('%Y%m%d')
-        },
-        fields=['cal_date', 'is_open']
-    )
-    trading_day = [
-        str(datetime.datetime.strptime(i[0], '%Y%m%d')).split(' ')[0] for i in trading_day[-15:]
-    ]
-    trading_day.reverse()
+    trading_day = []
     code_dict = {
         'continuous_up': {},
         'zl': [],
@@ -35,6 +23,7 @@ class SlowCowViewSet(APIView):
 
     def get(self, request):
         """GET请求"""
+        self.trading_day = trading_day(15)
         if self.trading_day:
             redis_keys = f'code_analysis_data_{datetime.date.today().strftime("%Y-%m-%d")}'
             read_cache = cache.get(redis_keys)
@@ -99,9 +88,11 @@ class SlowCowViewSet(APIView):
 
     def _quantity_energy(self):
         """量能分析"""
-        for keys in self.code_dict['continuous_up']:
-            for code in self.code_dict['continuous_up'][keys]:
-                day_data = self._read_data(code=code)
+        pass
+
+        # for keys in self.code_dict['continuous_up']:
+        #     for code in self.code_dict['continuous_up'][keys]:
+        #         day_data = self._read_data(code=code)
 
 
     def _trading_volume(self):
