@@ -25,4 +25,4 @@ def trading_day(days: int):
         if rec_day not in trading_days:
             trading_days = [rec_day] + trading_days
         cache.set(f'trading_days_cache_{datetime.date.today()}', trading_days, timeout=1 * 60 * 60)
-    return trading_days
+    return list(set(trading_days))

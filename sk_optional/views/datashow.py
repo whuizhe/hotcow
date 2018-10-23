@@ -19,7 +19,7 @@ class DataShowViewSet(View):
         data = request.GET
         if data and 'code' in data:
             code_data = []
-            code_query = Base(StockPrice, **{'code': data['code'], 'trading_day__in': trading_day(15)}).findfilter()
+            code_query = Base(StockPrice, **{'code': data['code'], 'trading_day__in': trading_day(9)}).findfilter()
             for i in code_query:
                 code_data.append({
                     'open': i.open,

@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from extends import Base, trading_day
-from basicdata.models import StockInfo, StockPrice
+from basicdata.models import StockPrice
 from basicdata.serializers import StockPriceSerializer
 
 __all__ = ['SlowCowViewSet']
@@ -29,9 +29,10 @@ class SlowCowViewSet(APIView):
             read_cache = cache.get(redis_keys)
             if read_cache:
                 return Response({'SlowCow': read_cache, 'trading_day': self.trading_day})
-            code_all = Base(StockInfo, **{'db_status': 1}).findfilter()
-            for i in code_all:
-                day_data = self._read_data(sid=i.id)
+
+            sk_all = cache.iter_keys('cache_code_info_*')
+            for i in sk_all:
+                day_data = self._read_data(code=str(i).split('~')[-1])
                 # 连接上涨
                 self._continuous_up(day_data)
             # 主散流入
@@ -64,18 +65,18 @@ class SlowCowViewSet(APIView):
             # 上涨 大于5日均线 交易量大于5kw
             if day_data[self.trading_day[0]]['close'] >= day_data[self.trading_day[1]]['close'] and \
                     day_data[self.trading_day[0]]['close'] >= am5 and \
-                    day_data[self.trading_day[0]]['hand_number'] * day_data[self.trading_day[0]]['average'] >= 500000:
-                for i in range(2, 21):
+                    day_data[self.trading_day[0]]['hand_number'] * day_data[self.trading_day[0]]['average'] >= 500_000:
+                i = 0
+                for i in range(2, 15):
                     if day_data[self.trading_day[i - 1]]['close'] >= day_data[self.trading_day[i]]['close']:
-                        if i not in self.code_dict['continuous_up']:
-                            self.code_dict['continuous_up'][i] = []
-                        self.code_dict['continuous_up'][i].append(day_data[self.trading_day[0]]['code'])
-                        if i != 2:
-                            for m in range(2, i):
-                                if day_data[self.trading_day[0]]['code'] in self.code_dict['continuous_up'][m]:
-                                    self.code_dict['continuous_up'][m].remove(day_data[self.trading_day[0]]['code'])
+                        pass
                     else:
                         break
+                if i - 1 >= 2:
+                    if str(i) not in self.code_dict['continuous_up']:
+                        self.code_dict['continuous_up'][str(i)] = []
+                    self.code_dict['continuous_up'][str(i)].append(day_data[self.trading_day[0]]['code'])
+
         except KeyError:
             pass
 
@@ -111,13 +112,7 @@ class SlowCowViewSet(APIView):
                     continue
                 # 主力正向流入
                 if status == 1:
-                    self.code_dict['zl'].append({
-                        'code': code,
-                        'up': keys,
-                    })
+                    self.code_dict['zl'].append(f'{code}^{keys}')
                     # 散户流出小于主力流入的0.6
                     if loose_amount < 0 and round(main_amount / (0 - loose_amount), 1) <= 0.6:
-                        self.code_dict['zl_1'].append({
-                            'code': code,
-                            'up': keys,
-                        })
+                        self.code_dict['zl_1'].append(f'{code}^{keys}')
