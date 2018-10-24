@@ -27,10 +27,10 @@ if __name__ == '__main__':
         tick, trigger='cron', args=('skoptional/historydeals/', ), hour='16,19', minute='10', name='历史交易1'
     )
     scheduler.add_job(
-        tick, trigger='cron', args=('skoptional/historydeals/?average=1',), hour='16,19', minute='50', name='历史交易2'
+        tick, trigger='cron', args=('skoptional/historydeals/?average=1',), hour='16,19', minute='30', name='历史交易2'
     )
     scheduler.add_job(
-        tick, trigger='cron', args=('skoptional/mainflows/?code=1', ), hour='17,18', name='资金流向当天1'
+        tick, trigger='cron', args=('skoptional/mainflows/?code=1', ), hour='16,18', minute='40', name='资金流向当天1'
     )
     scheduler.add_job(
         tick, trigger='cron', args=('skoptional/mainflows/',), hour='3,6', name='资金流向历史2'
