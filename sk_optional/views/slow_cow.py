@@ -101,7 +101,7 @@ class SlowCowViewSet(APIView):
                 day_data = cache.get(f'history_code_data_cache_{code}')
                 if day_data:
                     main_amount, loose_amount, status = 0, 0, 1
-                    for i in self.trading_day[:int(keys)]:
+                    for i in self.trading_day[:3]:
                         if day_data[i]['main_amount'] < 0:
                             status = 0
                         main_amount += day_data[i]['main_amount']
