@@ -93,7 +93,6 @@ class SlowCowViewSet(APIView):
         for days in self.trading_day:
             pass
 
-
     def _trading_volume(self):
         """主散流入"""
         for keys in self.code_dict['continuous_up']:

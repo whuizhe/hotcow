@@ -1,0 +1,73 @@
+{% extends "public/label.html" %}
+{% block headcss %}
+{% endblock %}
+{% block info %}
+    <div class="row wrapper border-bottom white-bg page-heading">
+        <div class="col-lg-3">
+            <div class="search-form">
+                <form action="?code=" method="get">
+                    <div class="input-group">
+                        <input type="text" placeholder="输入代码" name="code" class="form-control input-s-lg">
+                        <div class="input-group-btn">
+                            <button class="btn btn-primary" type="submit">
+                                Search
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% if param %}
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title">
+                    <h3>{{ code }} ({{ code_name }})</h3>
+                </div>
+                <div class="ibox-content">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>上涨天数</th>
+                            <th>代码</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for keys in param %}
+                            {% for i in param %}
+                                <tr>
+                                    <td>{{ i }}</td>
+                                    <td>{{ i }}</td>
+                                </tr>
+                            {% endfor %}
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-lg-9">
+            <div class="ibox float-e-margins">
+                <div class="ibox-content">
+                    <div id="container" style="height:400px;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3">
+                <div class="ibox-content">
+                    <div id="main" style="height:400px;"></div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+        <h2>{{ code_name }}</h2>
+    {% endif %}
+{% endblock %}
+
+{% block js %}
+    <script src="/static/components/js/plugins/echarts/echarts.min.js"></script>
+
+{% endblock %}

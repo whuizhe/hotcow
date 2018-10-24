@@ -9,4 +9,5 @@ urlpatterns = [
     path('mainflows/', MainFlowsViewSet.as_view(), name='拉取资金流向'),
     path('datashow/', DataShowViewSet.as_view(), name='数据查询'),
     path('slowcow/', SlowCowViewSet.as_view(), name='慢牛'),
+    path('analysisshow/', AnalysisShowViewSet.as_view(), name='慢牛展示'),
 ]

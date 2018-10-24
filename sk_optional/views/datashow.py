@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """历史交易"""
 import requests
+import datetime
+from django.core.cache import cache
 from django.conf import settings
 from django.views.generic import View
 from django.shortcuts import render
@@ -8,7 +10,7 @@ from django.shortcuts import render
 from extends import Base, trading_day
 from basicdata.models import StockInfo, StockPrice
 
-__all__ = ['DataShowViewSet']
+__all__ = ['DataShowViewSet', 'AnalysisShowViewSet']
 
 
 class DataShowViewSet(View):
@@ -93,3 +95,18 @@ class DataShowViewSet(View):
             total_data['into'] = [int(float(total_flow[1])), int(float(total_flow[5]))]
             total_data['out'] = [int(float(total_flow[2])), int(float(total_flow[6]))]
         return total_data
+
+
+class AnalysisShowViewSet(View):
+    """分析数据展示"""
+
+    def get(self, request):
+        """GET请求"""
+        redis_keys = f'code_analysis_data_{datetime.date.today().strftime("%Y-%m-%d")}'
+        read_cache = cache.get(redis_keys)
+        print(read_cache)
+        if read_cache:
+            context = {
+                'param': read_cache
+            }
+            return render(request, 'sk_optional/analysisshow.html', context)
