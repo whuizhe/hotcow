@@ -104,7 +104,14 @@ class AnalysisShowViewSet(View):
         """GET请求"""
         redis_keys = f'code_analysis_data_{datetime.date.today().strftime("%Y-%m-%d")}'
         read_cache = cache.get(redis_keys)
-        print(read_cache)
+        code_list, code_info = [], {}
+        for i in read_cache['continuous_up']:
+            code_list += read_cache['continuous_up'][i]
+        code_query = Base(StockPrice, **{'code__in': code_list, 'trading_day__in': trading_day(3)}).findfilter()
+        for code in code_query:
+            if code.code not in code_info:
+                code_info[code.code] = []
+            code_info[code.code].append(code)
         if read_cache:
             context = {
                 'param': read_cache

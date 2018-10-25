@@ -110,7 +110,7 @@ class SlowCowViewSet(APIView):
                         continue
                     # 主力正向流入
                     if status == 1:
-                        self.code_dict['zl'].append(f'{code}^{keys}')
+                        self.code_dict['zl'].append(f'{code}')
                         # 散户流出小于主力流入的百分比
                         if loose_amount < 0 and round(main_amount / (0 - loose_amount), 1) <= 0.5:
-                            self.code_dict['zl_1'].append(f'{code}^{keys}')
+                            self.code_dict['zl_1'].append(f'{code}')

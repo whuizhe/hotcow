@@ -22,7 +22,7 @@ def trading_day(days: int):
         url_open = requests.get(url)
         url_info = url_open.text
         rec_day = url_info.split('=')[1].replace('"', '').split(' ')[0]
-        if int(datetime.datetime.now().strftime('%H')) >= 17:
+        if int(datetime.datetime.now().strftime('%H')) >= 16:
             if rec_day not in trading_days:
                 trading_days = [rec_day] + trading_days
         cache.set(f'trading_days_cache_{datetime.date.today()}', trading_days, timeout=1 * 60 * 60)

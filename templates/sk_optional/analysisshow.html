@@ -23,7 +23,7 @@
         <div class="col-lg-12">
             <div class="ibox float-e-margins">
                 <div class="ibox-title">
-                    <h3>{{ code }} ({{ code_name }})</h3>
+                    <h3>{{ code }}</h3>
                 </div>
                 <div class="ibox-content">
                     <table class="table">
@@ -34,12 +34,19 @@
                         </tr>
                         </thead>
                         <tbody>
-                        {% for keys in param %}
-                            {% for i in param %}
-                                <tr>
-                                    <td>{{ i }}</td>
-                                    <td>{{ i }}</td>
-                                </tr>
+                        {% for key, value in param.continuous_up.items %}
+                            {% for i in value %}
+                                {% if i in param.zl %}
+                                    <tr bgcolor="#FFCC33">
+                                        <td>{{ key }}</td>
+                                        <td>{{ i }}</td>
+                                    </tr>
+                                {% else %}
+                                    <tr>
+                                        <td>{{ key }}</td>
+                                        <td>{{ i }}</td>
+                                    </tr>
+                                {% endif %}
                             {% endfor %}
                         {% endfor %}
                         </tbody>
@@ -48,20 +55,20 @@
             </div>
         </div>
     </div>
-    <div class="row">
-        <div class="col-lg-9">
-            <div class="ibox float-e-margins">
-                <div class="ibox-content">
-                    <div id="container" style="height:400px;"></div>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-3">
-                <div class="ibox-content">
-                    <div id="main" style="height:400px;"></div>
-            </div>
-        </div>
-    </div>
+{#    <div class="row">#}
+{#        <div class="col-lg-9">#}
+{#            <div class="ibox float-e-margins">#}
+{#                <div class="ibox-content">#}
+{#                    <div id="container" style="height:400px;"></div>#}
+{#                </div>#}
+{#            </div>#}
+{#        </div>#}
+{#        <div class="col-lg-3">#}
+{#                <div class="ibox-content">#}
+{#                    <div id="main" style="height:400px;"></div>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
     {% else %}
         <h2>{{ code_name }}</h2>
     {% endif %}
