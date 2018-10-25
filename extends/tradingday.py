@@ -8,7 +8,7 @@ from django.conf import settings
 
 def trading_day(days: int):
     """获取交易日列表"""
-    trading_days = cache.get(f'trading_days_cache_{datetime.date.today()}')
+    trading_days = cache.get('trading_days_cache')
     if not trading_days:
         trading_days = []
         url = f'{settings.QT_URL3}data/view/ggdx.php?t=3&d=60&q=sz000001'
@@ -22,8 +22,8 @@ def trading_day(days: int):
         url_open = requests.get(url)
         url_info = url_open.text
         rec_day = url_info.split('=')[1].replace('"', '').split(' ')[0]
-        if int(datetime.datetime.now().strftime('%H')) >= 16:
+        if int(datetime.datetime.now().strftime('%H'))  >= 16:
             if rec_day not in trading_days:
                 trading_days = [rec_day] + trading_days
-        cache.set(f'trading_days_cache_{datetime.date.today()}', trading_days, timeout=30 * 60 * 60)
+        cache.set('trading_days_cache', trading_days, timeout=30 * 60 * 60)
     return trading_days[:days]
