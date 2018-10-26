@@ -32,8 +32,7 @@ class HistoryDealsViewSet(APIView):
         else:
             for i in sk_all:
                 code = cache.get(i)
-                if not Base(StockPrice, **{'code': code['code'], 'trading_day': td_last}).findfilter():
-                    tasks.append(self._close_day(code['sid'], code['exchange']))
+                tasks.append(self._close_day(code['sid'], code['exchange']))
 
         if tasks:
             asyncio.set_event_loop(asyncio.new_event_loop())  # 创建新的协程
