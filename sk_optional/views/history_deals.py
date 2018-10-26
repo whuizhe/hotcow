@@ -74,6 +74,7 @@ class HistoryDealsViewSet(APIView):
                             'hand_number': eval(price[5])
                         }
                         Base(StockPrice, **add_price).save_db()
+        return None
 
     async def _ma_day(self, code_name, trading_day):
         """日均线"""
@@ -84,18 +85,21 @@ class HistoryDealsViewSet(APIView):
             if price_query:
                 price_distribute = str(price_query[0]).replace('"', '').split('^')
                 if price_distribute:
-                    print(price_distribute)
-                    average, hand_number, active_number, bidding_rate = 0, 0, 0, 0
+                    average, hand_number, active_number = 0, 0, 0
                     for i in price_distribute:
                         num = str(i).split('~')
                         average += eval(num[0]) * eval(num[2])
                         hand_number += eval(num[2])
                         active_number += eval(num[1])
+                    print(average)
+                    print(hand_number)
+                    print(active_number)
                     Base(StockPrice, **{'code': code_name[2:], 'trading_day': trading_day}).update({
                         'average': round(average / hand_number, 2),
                         'active_number': active_number,
                         'bidding_rate': round(active_number / hand_number, 2)
                     })
+        return None
 
 
 class MainFlowsViewSet(APIView):
