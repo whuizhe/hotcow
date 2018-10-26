@@ -81,20 +81,20 @@ class HistoryDealsViewSet(APIView):
         async with aiohttp.ClientSession() as session:
             url_info = await self.fetch(session, url)
             price_query = re.findall('".*"', url_info)
-            if price_query and price_query[0] != '""':
-                price_data = price_query[0][1:-1]
-                price_distribute = str(price_data).split('^')
-                price_distribute = [i.split('~') for i in price_distribute]
-                average, hand_number, active_number, bidding_rate = 0, 0, 0, 0
-                for i in price_distribute:
-                    average += float(i[0]) * eval(i[2])
-                    hand_number += eval(i[2])
-                    active_number += eval(i[1])
-                Base(StockPrice, **{'code': code_name[2:], 'trading_day': trading_day}).update({
-                    'average': round(average / hand_number, 2),
-                    'active_number': active_number,
-                    'bidding_rate': round(active_number / hand_number, 2)
-                })
+            if price_query:
+                price_distribute = str(price_query[0]).replace('"', '').split('^')
+                if price_distribute:
+                    average, hand_number, active_number, bidding_rate = 0, 0, 0, 0
+                    for i in price_distribute:
+                        i = str(i).split('~')
+                        average += float(i[0]) * eval(i[2])
+                        hand_number += eval(i[2])
+                        active_number += eval(i[1])
+                    Base(StockPrice, **{'code': code_name[2:], 'trading_day': trading_day}).update({
+                        'average': round(average / hand_number, 2),
+                        'active_number': active_number,
+                        'bidding_rate': round(active_number / hand_number, 2)
+                    })
 
 
 class MainFlowsViewSet(APIView):
