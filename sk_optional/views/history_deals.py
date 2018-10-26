@@ -84,12 +84,13 @@ class HistoryDealsViewSet(APIView):
             if price_query:
                 price_distribute = str(price_query[0]).replace('"', '').split('^')
                 if price_distribute:
+                    print(price_distribute)
                     average, hand_number, active_number, bidding_rate = 0, 0, 0, 0
                     for i in price_distribute:
-                        i = str(i).split('~')
-                        average += eval(i[0]) * eval(i[2])
-                        hand_number += eval(i[2])
-                        active_number += eval(i[1])
+                        num = str(i).split('~')
+                        average += eval(num[0]) * eval(num[2])
+                        hand_number += eval(num[2])
+                        active_number += eval(num[1])
                     Base(StockPrice, **{'code': code_name[2:], 'trading_day': trading_day}).update({
                         'average': round(average / hand_number, 2),
                         'active_number': active_number,
