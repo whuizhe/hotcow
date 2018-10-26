@@ -91,9 +91,10 @@ class HistoryDealsViewSet(APIView):
                         average += eval(num[0]) * eval(num[2])
                         hand_number += eval(num[2])
                         active_number += eval(num[1])
-                    print(average)
-                    print(hand_number)
+                    print(f'----{code_name[2:]}----')
+                    print(round(average / hand_number, 2))
                     print(active_number)
+                    print(round(active_number / hand_number, 2))
                     Base(StockPrice, **{'code': code_name[2:], 'trading_day': trading_day}).update({
                         'average': round(average / hand_number, 2),
                         'active_number': active_number,
