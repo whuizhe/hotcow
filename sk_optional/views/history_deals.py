@@ -23,22 +23,23 @@ class HistoryDealsViewSet(APIView):
         """GET请求"""
         data = request.GET
         td_last = trading_day(2)[0]
-        sk_all = cache.iter_keys('cache_code_info_*')
-        tasks = []
-        if data and 'average' in data:
-            for i in sk_all:
-                code = cache.get(i)
-                tasks.append(self._ma_day(code['exchange'], td_last))
-        else:
-            for i in sk_all:
-                code = cache.get(i)
-                tasks.append(self._close_day(code['sid'], code['exchange']))
+        if td_last:
+            sk_all = cache.iter_keys('cache_code_info_*')
+            tasks = []
+            if data and 'average' in data:
+                for i in sk_all:
+                    code = cache.get(i)
+                    tasks.append(self._ma_day(code['exchange'], td_last))
+            else:
+                for i in sk_all:
+                    code = cache.get(i)
+                    tasks.append(self._close_day(code['sid'], code['exchange']))
 
-        if tasks:
-            asyncio.set_event_loop(asyncio.new_event_loop())  # 创建新的协程
-            loop = asyncio.get_event_loop()
-            loop.run_until_complete(asyncio.wait(tasks))
-            loop.close()
+            if tasks:
+                asyncio.set_event_loop(asyncio.new_event_loop())  # 创建新的协程
+                loop = asyncio.get_event_loop()
+                loop.run_until_complete(asyncio.wait(tasks))
+                loop.close()
 
         return Response({'HistoryDeals': 'data update node'})
 
@@ -91,10 +92,6 @@ class HistoryDealsViewSet(APIView):
                         average += eval(num[0]) * eval(num[2])
                         hand_number += eval(num[2])
                         active_number += eval(num[1])
-                    print(f'----{code_name[2:]}----')
-                    print(round(average / hand_number, 2))
-                    print(active_number)
-                    print(round(active_number / hand_number, 2))
                     Base(StockPrice, **{'code': code_name[2:], 'trading_day': trading_day}).update({
                         'average': round(average / hand_number, 2),
                         'active_number': active_number,

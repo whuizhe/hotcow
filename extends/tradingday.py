@@ -1,29 +1,35 @@
 # -*- coding: utf-8 -*-
 """交易日"""
 import datetime
-import requests
 from django.core.cache import cache
-from django.conf import settings
+
+from .tushare_api import tushare_api
 
 
 def trading_day(days: int):
     """获取交易日列表"""
+
     trading_days = cache.get('trading_days_cache')
     if not trading_days:
         trading_days = []
-        url = f'{settings.QT_URL3}data/view/ggdx.php?t=3&d=60&q=sz000001'
-        url_open = requests.get(url)
-        url_info = url_open.text
-        url_list = url_info.split('=')[1].replace(';', '').replace('\'', '').split('~')
-        for i in url_list:
-            if '^' in i:
-                trading_days.append(i.split('^')[0])
-        url = f'{settings.QT_URL2}?q=marketStat'
-        url_open = requests.get(url)
-        url_info = url_open.text
-        rec_day = url_info.split('=')[1].replace('"', '').split(' ')[0]
-        if int(datetime.datetime.now().strftime('%H'))  >= 16:
-            if rec_day not in trading_days:
-                trading_days = [rec_day] + trading_days
-        cache.set('trading_days_cache', trading_days, timeout=30 * 60 * 60)
-    return trading_days[:days]
+        requeys_data = tushare_api(
+            api_name='trade_cal',
+            params={
+                'is_open': 1,
+                'start_date': datetime.datetime.now().strftime('%Y0901'),
+                'end_date': datetime.datetime.now().strftime('%Y%m%d'),
+            },
+            fields=['cal_date']
+        )
+        if requeys_data:
+            for i in requeys_data:
+                date_list = list(i[0])
+                date_list.insert(4, '-')
+                date_list.insert(7, '-')
+                trading_days.append(''.join(date_list))
+            trading_days.reverse()
+            cache.set('trading_days_cache', trading_days, timeout=30 * 60 * 60)
+    if trading_days:
+        return trading_days[:days]
+    else:
+        return None
