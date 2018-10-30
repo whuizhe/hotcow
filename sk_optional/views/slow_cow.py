@@ -66,9 +66,8 @@ class SlowCowViewSet(APIView):
                     day_data[self.trading_day[0]]['hand_number'] * day_data[self.trading_day[0]]['average'] >= 500_000:
                 i = 0
                 for i in range(2, 11):
-                    if len(self.trading_day) >= i:
-                        if day_data[self.trading_day[i - 1]]['close'] < day_data[self.trading_day[i]]['close']:
-                            break
+                    if day_data[self.trading_day[i - 1]]['close'] < day_data[self.trading_day[i]]['close']:
+                        break
                 if i - 1 >= 2:
                     if str(i) not in self.code_dict['continuous_up']:
                         self.code_dict['continuous_up'][str(i)] = []
@@ -78,7 +77,7 @@ class SlowCowViewSet(APIView):
                         day_data,
                         timeout=30 * 60
                     )
-        except KeyError:
+        except (KeyError, IndexError):
             pass
 
     def _am(self, few_day: int, day_dat):
