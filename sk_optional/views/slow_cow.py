@@ -99,7 +99,7 @@ class SlowCowViewSet(APIView):
             for code in self.code_dict['continuous_up'][keys]:
                 day_data = cache.get(f'history_code_data_cache_{code}')
                 if day_data:
-                    main_amount, loose_amount, status = 0, 0, 1
+                    main_amount, loose_amount, status, m = 0, 0, 1, 0
                     for i in self.trading_day[:3]:
                         if day_data[i]['main_amount'] < 0:
                             status = 0
@@ -114,3 +114,12 @@ class SlowCowViewSet(APIView):
                         # 散户流出小于主力流入的百分比
                         if loose_amount < 0 and round(main_amount / (0 - loose_amount), 1) <= 0.5:
                             self.code_dict['zl_1'].append(f'{code}')
+                    # 连板数
+                    for con in self.trading_day:
+                        day_before = day_data[self.trading_day.index(con) + 1]['close']
+                        if round(day_before * 0.1 + day_before, 2) == day_data[con]['close']:
+                            m += 1
+                        else:
+                            break
+                    if m != 0:
+                        self.code_dict['zl_lb'].append(f'{code}^{m}')
