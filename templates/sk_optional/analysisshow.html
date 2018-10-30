@@ -37,15 +37,15 @@
                         {% for key, value in param.continuous_up.items %}
                             {% for i in value %}
                                 {% if i in param.zl %}
-                                    <tr bgcolor="#FFCC33">
-                                        <td>{{ key }}</td>
-                                        <td>{{ i }}</td>
-                                    </tr>
-                                {% else %}
                                     <tr>
                                         <td>{{ key }}</td>
-                                        <td>{{ i }}</td>
+                                        <td><a href="/skoptional/datashow/?code={{ i }}">{{ i }}</a></td>
                                     </tr>
+{#                                {% else %}#}
+{#                                    <tr bgcolor="#FFCC33">#}
+{#                                        <td>{{ key }}</td>#}
+{#                                        <td>{{ i }}</td>#}
+{#                                    </tr>#}
                                 {% endif %}
                             {% endfor %}
                         {% endfor %}
