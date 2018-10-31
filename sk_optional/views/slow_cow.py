@@ -18,7 +18,8 @@ class SlowCowViewSet(APIView):
     code_dict = {
         'continuous_up': {},
         'zl': [],
-        'zl_1': []
+        'zl_l': [],
+        'lian_ban': []
     }
 
     def get(self, request):
@@ -112,8 +113,8 @@ class SlowCowViewSet(APIView):
                     if status == 1:
                         self.code_dict['zl'].append(f'{code}')
                         # 散户流出小于主力流入的百分比
-                        if loose_amount < 0 and round(main_amount / (0 - loose_amount), 1) <= 0.5:
-                            self.code_dict['zl_1'].append(f'{code}')
+                        if loose_amount < 0 and round(main_amount / (0 - loose_amount), 1) <= 0.4:
+                            self.code_dict['zl_l'].append(f'{code}')
                     # 连板数
                     for con in self.trading_day:
                         day_before = day_data[self.trading_day[self.trading_day.index(con) + 1]]['close']
@@ -122,4 +123,4 @@ class SlowCowViewSet(APIView):
                         else:
                             break
                     if m != 0:
-                        self.code_dict['zl_lb'].append(f'{code}^{m}')
+                        self.code_dict['lian_ban'].append(f'{code}^{m}')
