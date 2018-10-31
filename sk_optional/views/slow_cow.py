@@ -116,7 +116,7 @@ class SlowCowViewSet(APIView):
                             self.code_dict['zl_1'].append(f'{code}')
                     # 连板数
                     for con in self.trading_day:
-                        day_before = day_data[self.trading_day.index(con) + 1]['close']
+                        day_before = day_data[self.trading_day[self.trading_day.index(con) + 1]]['close']
                         if round(day_before * 0.1 + day_before, 2) == day_data[con]['close']:
                             m += 1
                         else:
