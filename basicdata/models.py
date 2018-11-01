@@ -18,7 +18,7 @@ from django.db import models
 
 
 class StockInfo(models.Model):
-    """应用节点监控数据"""
+    """"""
 
     id = models.AutoField(primary_key=True, blank=False, auto_created=True)
     db_status = models.IntegerField(verbose_name='数据状态', default=1, blank=False)
@@ -37,7 +37,7 @@ class StockInfo(models.Model):
 
 
 class StockPrice(models.Model):
-    """应用节点监控数据"""
+    """"""
 
     id = models.AutoField(primary_key=True, blank=False, auto_created=True)
     sk_info = models.ForeignKey(StockInfo, on_delete=None, related_query_name='sk_info_id')
@@ -57,3 +57,13 @@ class StockPrice(models.Model):
 
     class Meta:
         db_table = "sk_price"
+
+
+class TradingDay(models.Model):
+    """"""
+
+    id = models.AutoField(primary_key=True, blank=False, auto_created=True)
+    day = models.DateField(auto_now_add=False, auto_now=False, blank=True)
+
+    class Meta:
+        db_table = "trading_day"

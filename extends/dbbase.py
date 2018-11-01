@@ -22,8 +22,8 @@ class Base(object):
         __in 包含查询 字段__in
         __gt 大于 字段__gt 例: id > 1
         __gte 大于 字段__gt 例: id >= 1
-        _lt 小于 字段__lt 例: id < 1
-        _lte 小于 字段__lte 例: id <= 1
+        __lt 小于 字段__lt 例: id < 1
+        __lte 小于 字段__lte 例: id <= 1
         __startswith 区分大小写,开始位置匹配 例: LIKE 'Will%'
         __istartswith 不区分大小写，开始位置匹配 例: LIKE 'Will%'
         __endswith 区分大小写,结束位置匹配 例: LIKE '%Will'
