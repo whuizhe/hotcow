@@ -9,7 +9,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from extends import Base, ts_api
-from .models import StockInfo
+from basicdata.models import StockInfo
+
+__all__ = ['BasisDataViewSet']
 
 
 class BasisDataViewSet(APIView):

@@ -10,10 +10,10 @@ from django.core.cache import cache
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from extends import Base, trading_day
-from basicdata.models import StockPrice
+from extends import Base
+from basicdata.models import StockPrice, TradingDay
 
-__all__ = ['HistoryDealsViewSet', 'MainFlowsViewSet']
+__all__ = ['HistoryDealsViewSet', 'MainFlowsCurrViewSet', 'MainFlowsViewSet']
 
 
 class HistoryDealsViewSet(APIView):
@@ -21,25 +21,17 @@ class HistoryDealsViewSet(APIView):
 
     def get(self, request):
         """GET请求"""
-        data = request.GET
-        td_last = trading_day(2)[0]
-        if td_last:
-            sk_all = cache.iter_keys('cache_code_info_*')
-            tasks = []
-            if data and 'average' in data:
-                for i in sk_all:
-                    code = cache.get(i)
-                    tasks.append(self._ma_day(code['exchange'], td_last))
-            else:
-                for i in sk_all:
-                    code = cache.get(i)
-                    tasks.append(self._close_day(code['sid'], code['exchange']))
+        tasks = []
+        sk_all = cache.iter_keys('cache_code_info_*')
+        for i in sk_all:
+            code = cache.get(i)
+            tasks.append(self._close_day(code['sid'], code['exchange']))
 
-            if tasks:
-                asyncio.set_event_loop(asyncio.new_event_loop())  # 创建新的协程
-                loop = asyncio.get_event_loop()
-                loop.run_until_complete(asyncio.wait(tasks))
-                loop.close()
+        if tasks:
+            asyncio.set_event_loop(asyncio.new_event_loop())  # 创建新的协程
+            loop = asyncio.get_event_loop()
+            loop.run_until_complete(asyncio.wait(tasks))
+            loop.close()
 
         return Response({'HistoryDeals': 'data update node'})
 
@@ -77,11 +69,30 @@ class HistoryDealsViewSet(APIView):
                         Base(StockPrice, **add_price).save_db()
         return None
 
-    async def _ma_day(self, code_name, trading_day):
+
+class MainFlowsCurrViewSet(APIView):
+    """当天资金流向"""
+
+    def get(self, request):
+        """GET请求"""
+        if Base(TradingDay, **{'day': datetime.date.today()}).findfilter():
+            tasks = []
+            sk_all = cache.iter_keys('cache_code_info_*')
+            for i in sk_all:
+                code = cache.get(i)
+                tasks.append(self._ma_day(code['exchange'], ))
+
+            asyncio.set_event_loop(asyncio.new_event_loop())  # 创建新的协程
+            loop = asyncio.get_event_loop()
+            loop.run_until_complete(asyncio.wait(tasks))
+            loop.close()
+        return Response({'MainFlows': 'data update node'})
+
+    async def _ma_day(self, code_name):
         """日均线"""
         url = f'{settings.QT_URL3}data/index.php?appn=price&c={code_name}'
         async with aiohttp.ClientSession() as session:
-            url_info = await self.fetch(session, url)
+            url_info = await HistoryDealsViewSet.fetch(session, url)
             price_query = re.findall('".*"', url_info)
             if price_query:
                 price_distribute = str(price_query[0]).replace('"', '').split('^')
@@ -92,7 +103,7 @@ class HistoryDealsViewSet(APIView):
                         average += eval(num[0]) * eval(num[2])
                         hand_number += eval(num[2])
                         active_number += eval(num[1])
-                    Base(StockPrice, **{'code': code_name[2:], 'trading_day': trading_day}).update({
+                    Base(StockPrice, **{'code': code_name[2:], 'trading_day': datetime.date.today()}).update({
                         'average': round(average / hand_number, 2),
                         'active_number': active_number,
                         'bidding_rate': round(active_number / hand_number, 2)
@@ -101,7 +112,7 @@ class HistoryDealsViewSet(APIView):
 
 
 class MainFlowsViewSet(APIView):
-    """资金流向"""
+    """历史资金流向"""
 
     def get(self, request):
         """GET请求"""
