@@ -15,7 +15,7 @@ from .models import StockInfo
 class BasisDataViewSet(APIView):
     """基础数据"""
     # 次新的定义
-    listed_day = 700
+    listed_day = 365
     code_list = []
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:62.0) Gecko/20100101 Firefox/62.0'
@@ -42,6 +42,8 @@ class BasisDataViewSet(APIView):
                     ).days
                     if jet_lag <= self.listed_day:
                         new = 1
+                    elif jet_lag <= self.listed_day * 2:
+                        new = 2
                     else:
                         new = 0
                     Base(StockInfo, **{
@@ -65,6 +67,8 @@ class BasisDataViewSet(APIView):
                     ).days
                     if jet_lag <= self.listed_day:
                         new = 1
+                    elif jet_lag <= self.listed_day * 2:
+                        new = 2
                     else:
                         new = 0
                     query_code[0].new = new
