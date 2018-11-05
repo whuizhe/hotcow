@@ -18,7 +18,7 @@ from django.db import models
 
 
 class StockInfo(models.Model):
-    """"""
+    """基础数据"""
 
     id = models.AutoField(primary_key=True, blank=False, auto_created=True)
     db_status = models.IntegerField(verbose_name='数据状态', default=1, blank=False)
@@ -29,6 +29,7 @@ class StockInfo(models.Model):
     circulate_equity = models.FloatField(verbose_name='流通股', default=0, blank=False)
     listed_time = models.DateField(auto_now_add=False, auto_now=False, blank=True)
     new = models.IntegerField(verbose_name='次新', default=0, blank=False)
+    region = models.CharField(verbose_name='概念', max_length=16, blank=False)
     concept = JSONField(verbose_name='概念', blank=False)
     updated = models.DateTimeField(auto_now_add=False, auto_now=True, blank=True)
 
@@ -37,7 +38,7 @@ class StockInfo(models.Model):
 
 
 class StockPrice(models.Model):
-    """"""
+    """交易数据"""
 
     id = models.AutoField(primary_key=True, blank=False, auto_created=True)
     sk_info = models.ForeignKey(StockInfo, on_delete=None, related_query_name='sk_info_id')
@@ -60,10 +61,23 @@ class StockPrice(models.Model):
 
 
 class TradingDay(models.Model):
-    """"""
+    """交易日"""
 
     id = models.AutoField(primary_key=True, blank=False, auto_created=True)
     day = models.DateField(auto_now_add=False, auto_now=False, blank=True)
 
     class Meta:
         db_table = "trading_day"
+
+
+class Conecpt(models.Model):
+    """概念"""
+
+    id = models.AutoField(primary_key=True, blank=False, auto_created=True)
+    conecpt_code = models.CharField(verbose_name='代码', max_length=16, blank=False)
+    name = models.CharField(verbose_name='名称', max_length=32, blank=False)
+    clk = models.CharField(verbose_name='明细', max_length=32, blank=False)
+    pt = models.CharField(verbose_name='bd_cpt概念', max_length=32, blank=False)
+
+    class Meta:
+        db_table = "conecpt"

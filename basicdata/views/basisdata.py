@@ -24,6 +24,8 @@ class BasisDataViewSet(APIView):
     }
 
     def get(self, request):
+        region_dict = cache.get('code_region_data_cache')
+        conecpt_dict = cache.get('code_conecpt_data_cache')
         all_code = ts_api(
             api_name='stock_basic',
             params={'list_status': 'L'},
@@ -63,6 +65,15 @@ class BasisDataViewSet(APIView):
                 code_price_info = c.replace('"', '').split('~')
                 query_code = Base(StockInfo, **{'db_status': 1, 'code': code_price_info[2]}).findfilter()
                 if query_code:
+                    # 地域
+                    if region_dict and query_code[0].code in region_dict:
+                        query_code[0].region = region_dict[query_code[0].code]
+                    # 概念
+                    if conecpt_dict and query_code[0].code in conecpt_dict:
+                        query_code[0].concept['concept'] = conecpt_dict[query_code[0].code]
+                    # 行业
+
+
                     jet_lag = (
                             datetime.date.today() -
                             query_code[0].listed_time
