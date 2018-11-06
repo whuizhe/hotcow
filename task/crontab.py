@@ -38,6 +38,9 @@ if __name__ == '__main__':
                                         'basis/mainflows/?code=1'  # 资金流向当天
                                     ], ), hour='16,19', minute='30', name='当天数据'
     )
+    scheduler.add_job(
+        tick, trigger='cron', args=(['intraday/turnover/'], ), hour='9-15', second='*/30', name='历史交易'
+    )
 
     scheduler.start()
 

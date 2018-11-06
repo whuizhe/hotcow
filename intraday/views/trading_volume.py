@@ -10,6 +10,9 @@ from django.core.cache import cache
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from extends import Base
+from basicdata.models import TradingDay
+
 
 __all__ = ['TradingVoViewSet']
 
@@ -23,16 +26,17 @@ class TradingVoViewSet(APIView):
     """
 
     def get(self, request):
-        code_list = ['sz000669', 'sz300694', 'sz300508', 'sh603076', 'sz002356']
-        tasks = []
-        for i in code_list:
-            tasks.append(self._constantly_deal(i))
+        if Base(TradingDay, **{'day': date.today()}).findfilter():
+            code_list = ['sz000669', 'sz300694', 'sz300508', 'sh603076', 'sz002356']
+            tasks = []
+            for i in code_list:
+                tasks.append(self._constantly_deal(i))
 
-        if tasks:
-            asyncio.set_event_loop(asyncio.new_event_loop())  # 创建新的协程
-            loop = asyncio.get_event_loop()
-            loop.run_until_complete(asyncio.wait(tasks))
-            loop.close()
+            if tasks:
+                asyncio.set_event_loop(asyncio.new_event_loop())  # 创建新的协程
+                loop = asyncio.get_event_loop()
+                loop.run_until_complete(asyncio.wait(tasks))
+                loop.close()
 
         return Response({"BasisData": {"Status": 1, "msg": "Basis data update node"}})
 
