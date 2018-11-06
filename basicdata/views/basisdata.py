@@ -63,7 +63,6 @@ class BasisDataViewSet(APIView):
             code_list = re.findall('".*"', open_url.text)
             for c in code_list:
                 code_price_info = c.replace('"', '').split('~')
-                print(code_price_info)
                 query_code = Base(StockInfo, **{'db_status': 1, 'code': code_price_info[2]}).findfilter()
                 if query_code:
                     # 地域
@@ -85,8 +84,9 @@ class BasisDataViewSet(APIView):
                         new = 0
                     query_code[0].new = new
                     query_code[0].name = code_price_info[1]
-                    query_code[0].total_equity = round(float(code_price_info[-9]) / float(code_price_info[3]), 3)
-                    query_code[0].circulate_equity = round(float(code_price_info[-10]) / float(code_price_info[3]), 3)
+                    if code_price_info[-9] and code_price_info[3]:
+                        query_code[0].total_equity = round(float(code_price_info[-9]) / float(code_price_info[3]), 3)
+                        query_code[0].circulate_equity = round(float(code_price_info[-10]) / float(code_price_info[3]), 3)
                     query_code[0].save()
 
             # 缓存数据到redis
