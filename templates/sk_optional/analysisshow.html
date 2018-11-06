@@ -46,8 +46,10 @@
                                     <td>近端次新({{ i.listed_time |date:"Y-m-d" }})</td>
                                 {% elif i.new == 2 %}
                                     <td>远端次新({{ i.listed_time |date:"Y-m-d" }})</td>
+                                {% else %}
+                                    <td>否</td>
                                 {% endif %}
-                                <td>{{ i.concept.concept }}</td>
+                                <td>{% for m in i.concept.concept %} {{ m }} {% endfor %}</td>
                             </tr>
                         {% endfor %}
                         </tbody>
