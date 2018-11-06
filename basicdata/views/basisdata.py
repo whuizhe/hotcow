@@ -63,6 +63,7 @@ class BasisDataViewSet(APIView):
             code_list = re.findall('".*"', open_url.text)
             for c in code_list:
                 code_price_info = c.replace('"', '').split('~')
+                print(code_price_info)
                 query_code = Base(StockInfo, **{'db_status': 1, 'code': code_price_info[2]}).findfilter()
                 if query_code:
                     # 地域
