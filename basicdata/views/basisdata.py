@@ -71,9 +71,7 @@ class BasisDataViewSet(APIView):
                     # 概念
                     if conecpt_dict and query_code[0].code in conecpt_dict:
                         query_code[0].concept['concept'] = conecpt_dict[query_code[0].code]
-                    # 行业
-
-
+                    # 盘口
                     jet_lag = (
                             datetime.date.today() -
                             query_code[0].listed_time

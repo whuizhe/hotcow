@@ -17,13 +17,16 @@ from django.urls import path, include, re_path
 from django.http import HttpResponse
 from basicdata import urls as basicdata_url
 from sk_optional import urls as sk_optional_url
+from intraday import urls as intraday_url
 
 
 def http404(request):
     return HttpResponse('404', status=404)
 
+
 urlpatterns = [
     path('basis/', include(basicdata_url), name='获取基础数据'),
     path('skoptional/', include(sk_optional_url), name='自选'),
+    path('intraday/', include(intraday_url), name='盘中'),
     re_path('.*', http404)
 ]

@@ -12,30 +12,33 @@ logging.getLogger('apscheduler').setLevel(logging.DEBUG)
 
 
 def tick(url):
-    try:
-        url_open = requests.get(f'http://127.0.0.1:32080/{url}', timeout=30)
-        logging.info(f'URL:{url} {url_open.text}')
-    except Exception as e:
-        logging.error(f'URL:{url} Error:{e}')
+    for i in url:
+        try:
+            url_open = requests.get(f'http://127.0.0.1:32080/{i}', timeout=30)
+            logging.info(f'URL:{i} {url_open.text}')
+        except Exception as e:
+            logging.error(f'URL:{i} Error:{e}')
 
 
 if __name__ == '__main__':
     scheduler = AsyncIOScheduler()
     scheduler.add_job(
-        tick, trigger='cron', args=('basis/codeinfo/', ), hour='23, 5', name='基础'
+        tick, trigger='cron', args=([
+                                        'basis/concept/',   # 拉取概念域名
+                                        'basis/codeinfo/',  # 拉取基础数据
+                                        'basis/mainflows/'  # 资金流向历史
+                                    ], ), hour='20, 7', name='基础'
     )
     scheduler.add_job(
-        tick, trigger='cron', args=('basis/historydeals/', ), hour='16,19', name='历史交易'
+        tick, trigger='cron', args=(['basis/historydeals/'], ), hour='16,19', name='历史交易'
     )
     scheduler.add_job(
-        tick, trigger='cron', args=('basis/mainflowscurr/', ), hour='16,19', minute='30', name='当天交易量'
+        tick, trigger='cron', args=([
+                                        'basis/mainflowscurr/',  # 当天交易量
+                                        'basis/mainflows/?code=1'  # 资金流向当天
+                                    ], ), hour='16,19', minute='30', name='当天数据'
     )
-    scheduler.add_job(
-        tick, trigger='cron', args=('basis/mainflows/?code=1', ), hour='16,19', minute='50', name='资金流向当天'
-    )
-    scheduler.add_job(
-        tick, trigger='cron', args=('basis/mainflows/', ), hour='3,6', name='资金流向历史'
-    )
+
     scheduler.start()
 
     try:
