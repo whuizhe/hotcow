@@ -53,5 +53,5 @@ class ConceptViewSet(APIView):
                     code_info = str(code_find[0]).replace("'};", "").replace("data:'", "")
                     for code in code_info.split(','):
                         code_region[code[2:]] = region_dict[keys]['t']
-        cache.set('code_region_data_cache', region_dict, timeout=24 * 60 * 60)
+        cache.set('code_region_data_cache', code_region, timeout=24 * 60 * 60)
         return Response({"Concept": {"Status": 1, "msg": "Basis Concept data"}})
