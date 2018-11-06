@@ -15,7 +15,12 @@ __all__ = ['TradingVoViewSet']
 
 
 class TradingVoViewSet(APIView):
-    """盘中成交量分析"""
+    """
+    盘中成交量分析
+    S 卖盘
+    B 买盘
+    M 中性盘
+    """
 
     def get(self, request):
         code_list = ['sz000669', 'sz300694', 'sz300508', 'sh603076', 'sz002356']
