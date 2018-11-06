@@ -12,6 +12,7 @@ from rest_framework.views import APIView
 
 from extends import Base
 from basicdata.models import TradingDay
+from sk_optional.models import MyChoice
 
 
 __all__ = ['TradingVoViewSet']
@@ -27,10 +28,10 @@ class TradingVoViewSet(APIView):
 
     def get(self, request):
         if Base(TradingDay, **{'day': date.today()}).findfilter():
-            code_list = ['sz000669', 'sz300694', 'sz300508', 'sh603076', 'sz002356']
+            my_code = Base(MyChoice, **{'db_status': 1}).findfilter()
             tasks = []
-            for i in code_list:
-                tasks.append(self._constantly_deal(i))
+            for i in my_code:
+                tasks.append(self._constantly_deal(i.code))
 
             if tasks:
                 asyncio.set_event_loop(asyncio.new_event_loop())  # 创建新的协程

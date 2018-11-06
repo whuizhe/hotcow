@@ -68,16 +68,3 @@ class TradingDay(models.Model):
 
     class Meta:
         db_table = "trading_day"
-
-
-class Conecpt(models.Model):
-    """概念"""
-
-    id = models.AutoField(primary_key=True, blank=False, auto_created=True)
-    conecpt_code = models.CharField(verbose_name='代码', max_length=16, blank=False)
-    name = models.CharField(verbose_name='名称', max_length=32, blank=False)
-    clk = models.CharField(verbose_name='明细', max_length=32, blank=False)
-    pt = models.CharField(verbose_name='bd_cpt概念', max_length=32, blank=False)
-
-    class Meta:
-        db_table = "conecpt"

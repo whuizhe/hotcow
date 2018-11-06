@@ -9,6 +9,7 @@ from django.shortcuts import render
 
 from extends import Base, trading_day
 from basicdata.models import StockInfo, StockPrice
+from sk_optional.models import MyChoice, MyChoiceData
 
 __all__ = ['DataShowViewSet', 'AnalysisShowViewSet']
 
@@ -102,18 +103,9 @@ class AnalysisShowViewSet(View):
 
     def get(self, request):
         """GET请求"""
-        redis_keys = f'code_analysis_data_{datetime.date.today().strftime("%Y-%m-%d")}'
-        read_cache = cache.get(redis_keys)
-        code_list, code_info = [], {}
-        for i in read_cache['continuous_up']:
-            code_list += read_cache['continuous_up'][i]
-        code_query = Base(StockPrice, **{'code__in': code_list, 'trading_day__in': trading_day(3)}).findfilter()
-        for code in code_query:
-            if code.code not in code_info:
-                code_info[code.code] = []
-            code_info[code.code].append(code)
-        if read_cache:
-            context = {
-                'param': read_cache
-            }
-            return render(request, 'sk_optional/analysisshow.html', context)
+        my_code = Base(MyChoice, **{'db_status': 1}).findfilter()
+        code_info = Base(StockInfo, **{'code__in': [str(i.code)[2:] for i in my_code]}).findfilter()
+        context = {
+            'param': code_info
+        }
+        return render(request, 'sk_optional/analysisshow.html', context)

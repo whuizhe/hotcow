@@ -24,7 +24,7 @@ if __name__ == '__main__':
     scheduler = AsyncIOScheduler()
     scheduler.add_job(
         tick, trigger='cron', args=([
-                                        'basis/concept/',   # 拉取概念域名
+                                        'basis/concept/',   # 拉取概念地域
                                         'basis/codeinfo/',  # 拉取基础数据
                                         'basis/mainflows/'  # 资金流向历史
                                     ], ), hour='20, 7', name='基础'
@@ -39,7 +39,7 @@ if __name__ == '__main__':
                                     ], ), hour='16,19', minute='30', name='当天数据'
     )
     scheduler.add_job(
-        tick, trigger='cron', args=(['intraday/turnover/'], ), hour='9-15', second='*/30', name='交易分笔'
+        tick, trigger='cron', args=(['intraday/turnover/'], ), hour='9-15', minute='30', second='*/30', name='交易分笔'
     )
 
     scheduler.start()
