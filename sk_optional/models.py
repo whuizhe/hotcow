@@ -16,24 +16,14 @@ class Meta:
 from django_mysql.models import JSONField
 from django.db import models
 
-
-class MyChoice(models.Model):
-    """我的自选"""
-
-    id = models.AutoField(primary_key=True, blank=False, auto_created=True)
-    db_status = models.IntegerField(verbose_name='数据状态', default=1, blank=False)
-    code = models.CharField(verbose_name='代码', max_length=6, blank=False)
-    updated = models.DateTimeField(auto_now_add=False, auto_now=True, blank=True)
-
-    class Meta:
-        db_table = "my_choice"
+from basicdata.models import StockInfo
 
 
 class MyChoiceData(models.Model):
     """我的数据"""
 
     id = models.AutoField(primary_key=True, blank=False, auto_created=True)
-    my_choice = models.ForeignKey(MyChoice, on_delete=None, related_query_name='my_choice_id')
+    sk_info = models.ForeignKey(StockInfo, on_delete=None, related_query_name='sk_info_id')
     trading_day = models.DateField(auto_now_add=False, auto_now=True, blank=True)
     trading_data = JSONField(verbose_name='交易数据')
     deal_data = JSONField(verbose_name='分价数据')

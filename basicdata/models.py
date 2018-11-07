@@ -22,6 +22,7 @@ class StockInfo(models.Model):
 
     id = models.AutoField(primary_key=True, blank=False, auto_created=True)
     db_status = models.IntegerField(verbose_name='数据状态', default=1, blank=False)
+    my_choice = models.IntegerField(verbose_name='自选', default=0, blank=False)
     exchange = models.CharField(verbose_name='交易所', max_length=8, blank=False)
     code = models.CharField(verbose_name='代码', max_length=6, blank=False)
     name = models.CharField(verbose_name='名称', max_length=32, blank=False)

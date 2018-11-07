@@ -2,14 +2,13 @@
 """历史交易"""
 import requests
 import datetime
-from django.core.cache import cache
 from django.conf import settings
 from django.views.generic import View
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 
 from extends import Base, trading_day
 from basicdata.models import StockInfo, StockPrice
-from sk_optional.models import MyChoice, MyChoiceData
+from sk_optional.models import MyChoiceData
 
 __all__ = ['DataShowViewSet', 'AnalysisShowViewSet']
 
@@ -101,11 +100,23 @@ class DataShowViewSet(View):
 class AnalysisShowViewSet(View):
     """分析数据展示"""
 
-    def get(self, request):
+    def get(self, request, code):
         """GET请求"""
-        my_code = Base(MyChoice, **{'db_status': 1}).findfilter()
-        code_info = Base(StockInfo, **{'code__in': [str(i.code)[2:] for i in my_code]}).findfilter()
+        code_info = Base(StockInfo, **{'db_status': 1, 'my_choice': 1}).findfilter()
+        my_code_data = Base(MyChoiceData, **{
+            'sk_info_id__in': [i.id for i in code_info],
+            'trading_day': datetime.date.today()
+        }).findfilter()
         context = {
-            'param': code_info
+            'param': my_code_data,
         }
+        print(context)
         return render(request, 'sk_optional/analysisshow.html', context)
+
+    def post(self, request, code):
+        Base(StockInfo, **{'db_status': 1, 'code': code}).update({'my_choice': 1})
+        return redirect('/skoptional/analysisshow/')
+
+    def delete(self, request, code):
+        Base(StockInfo, **{'db_status': 1, 'code': code}).update({'my_choice': 0})
+        return redirect('/skoptional/analysisshow/')
