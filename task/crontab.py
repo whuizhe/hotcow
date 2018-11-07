@@ -39,7 +39,7 @@ if __name__ == '__main__':
                                     ], ), hour='16,19', minute='30', name='当天数据'
     )
     scheduler.add_job(
-        tick, trigger='cron', args=(['intraday/turnover/'], ), hour='9-15', minute='30', second='*/30', name='交易分笔'
+        tick, trigger='cron', args=(['intraday/turnover/'], ), hour='9-15', second='*/30', name='交易分笔'
     )
 
     scheduler.start()
