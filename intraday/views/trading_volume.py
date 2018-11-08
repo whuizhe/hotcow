@@ -84,7 +84,14 @@ class TradingVoViewSet(APIView):
                     deal_info = re.search('\".*\"', url_info)
                     for m in deal_info.group().replace('"', '').split('|'):
                         ms = m.split('/')
-                        read_cache['data'][ms[1]] = ms
+                        read_cache['data'][ms[1]] = (
+                            eval(ms[0]),
+                            eval(ms[2]),
+                            eval(ms[3]),
+                            eval(ms[4]),
+                            eval(ms[5]),
+                            ms[6]
+                        )
                 else:
                     read_cache['number'] = i - 1
                     break
@@ -114,73 +121,35 @@ class TradingVoViewSet(APIView):
                     'liu_ru': 0,  # 流入
                     'liu_chu': 0,  # 流出
                     'total': 0,
-                    'minute_data': OrderedDict(),
                 }
             }
 
             for keys in read_cache['data']:
-                if keys[:-3] not in add_data['trading_data']['minute_data']:
-                    add_data['trading_data']['minute_data'][keys[:-3]] = {
-                        'z_buy': 0,  # 主买,
-                        'z_sell': 0,  # 主卖
-                        'caoda_dan': 0,  # 超大单
-                        'da_dan': 0,  # 大单
-                        'zhong_dan': 0,  # 中单
-                        'xiao_dan': 0,  # 小单
-                        'zhong_xing': 0,  # 中性盘,
-                        'liu_ru': 0,  # 流入
-                        'liu_chu': 0,  # 流出
-                        'total': 0,
-                    }
-
                 # 主买卖
                 if eval(read_cache['data'][keys][3]) >= 0.02:
                     add_data['trading_data']['z_buy'] += eval(read_cache['data'][keys][5]) / 10000
-                    add_data['trading_data']['minute_data'][keys[:-3]]['z_buy'] += eval(
-                        read_cache['data'][keys][5]
-                    ) / 10000
                 elif eval(read_cache['data'][keys][3]) <= -0.02:
                     add_data['trading_data']['z_sell'] += eval(read_cache['data'][keys][5]) / 10000
-                    add_data['trading_data']['minute_data'][keys[:-3]]['z_sell'] += eval(
-                        read_cache['data'][keys][5]
-                    ) / 10000
+
                 # 超大中小单
                 if eval(read_cache['data'][keys][5]) >= 5000000:
                     add_data['trading_data']['caoda_dan'] += eval(read_cache['data'][keys][5]) / 10000
-                    add_data['trading_data']['minute_data'][keys[:-3]]['caoda_dan'] += eval(
-                        read_cache['data'][keys][5]
-                    ) / 10000
                 if eval(read_cache['data'][keys][5]) >= 500000:
                     add_data['trading_data']['da_dan'] += eval(read_cache['data'][keys][5]) / 10000
-                    add_data['trading_data']['minute_data'][keys[:-3]]['da_dan'] += eval(
-                        read_cache['data'][keys][5]
-                    ) / 10000
                 elif 200000 <= eval(read_cache['data'][keys][5]) < 500000:
                     add_data['trading_data']['zhong_dan'] += eval(read_cache['data'][keys][5]) / 10000
-                    add_data['trading_data']['minute_data'][keys[:-3]]['zhong_dan'] += eval(
-                        read_cache['data'][keys][5]
-                    ) / 10000
                 else:
                     add_data['trading_data']['xiao_dan'] += eval(read_cache['data'][keys][5]) / 10000
-                    add_data['trading_data']['minute_data'][keys[:-3]]['xiao_dan'] += eval(
-                        read_cache['data'][keys][5]) / 10000
+
                 # 流出入
                 if read_cache['data'][keys][-1] == 'B':
                     add_data['trading_data']['liu_ru'] += eval(read_cache['data'][keys][5]) / 10000
-                    add_data['trading_data']['minute_data'][keys[:-3]]['liu_ru'] += eval(
-                        read_cache['data'][keys][5]) / 10000
                 elif read_cache['data'][keys][-1] == 'S':
                     add_data['trading_data']['liu_chu'] += eval(read_cache['data'][keys][5]) / 10000
-                    add_data['trading_data']['minute_data'][keys[:-3]]['liu_chu'] += eval(
-                        read_cache['data'][keys][5]) / 10000
                 else:
                     add_data['trading_data']['zhong_xing'] += eval(read_cache['data'][keys][5]) / 10000
-                    add_data['trading_data']['minute_data'][keys[:-3]]['zhong_xing'] += eval(
-                        read_cache['data'][keys][5]) / 10000
+
                 # 总量
                 add_data['trading_data']['total'] += eval(read_cache['data'][keys][5]) / 100000000
-                add_data['trading_data']['minute_data'][keys[:-3]]['total'] += eval(
-                    read_cache['data'][keys][5]
-                ) / 10000
             return add_data
         return None

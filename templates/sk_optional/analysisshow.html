@@ -29,6 +29,7 @@
                     <table class="table">
                         <thead>
                         <tr>
+                            <th>NO.</th>
                             <th>代码</th>
                             <th>名称</th>
                             <td>地域</td>
@@ -44,6 +45,7 @@
                         <tbody>
                         {% for i in param %}
                             <tr>
+                                <td>{{ i.sk_info.id }}</td>
                                 <td>{{ i.sk_info.code }} <button>删除</button></td>
                                 <td>{{ i.sk_info.name }}</td>
                                 <td>{{ i.sk_info.region }}</td>
