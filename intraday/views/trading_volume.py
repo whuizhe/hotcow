@@ -42,22 +42,20 @@ class TradingVoViewSet(APIView):
                     loop.close()
             elif data and 'save' in data:
                 for i in my_code:
-                    if 930 <= int(datetime.datetime.now().strftime('%H%M')) <= 1540:
-                        add_data = self._trading_volume(f'{i.exchange}{i.code}'.lower(), i.id)
-                        print(add_data)
-                        if not Base(MyChoiceData, **{
+                    add_data = self._trading_volume(f'{i.exchange}{i.code}'.lower(), i.id)
+                    if not Base(MyChoiceData, **{
+                        'sk_info_id': i.id,
+                        'trading_day': str(datetime.date.today())
+                    }).findfilter():
+                        Base(MyChoiceData, **add_data).save_db()
+                    else:
+                        Base(MyChoiceData, **{
                             'sk_info_id': i.id,
                             'trading_day': str(datetime.date.today())
-                        }).findfilter():
-                            Base(MyChoiceData, **add_data).save_db()
-                        else:
-                            Base(MyChoiceData, **{
-                                'sk_info_id': i.id,
-                                'trading_day': str(datetime.date.today())
-                            }).update({
-                                'deal_data': add_data['deal_data'],
-                                'trading_data': add_data['trading_data']
-                            })
+                        }).update({
+                            'deal_data': add_data['deal_data'],
+                            'trading_data': add_data['trading_data']
+                        })
         return Response({"BasisData": {"Status": 1, "msg": "Trading Vo Node"}})
 
     @staticmethod
