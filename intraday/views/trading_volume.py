@@ -126,30 +126,30 @@ class TradingVoViewSet(APIView):
 
             for keys in read_cache['data']:
                 # 主买卖
-                if eval(read_cache['data'][keys][3]) >= 0.02:
-                    add_data['trading_data']['z_buy'] += eval(read_cache['data'][keys][5]) / 10000
-                elif eval(read_cache['data'][keys][3]) <= -0.02:
-                    add_data['trading_data']['z_sell'] += eval(read_cache['data'][keys][5]) / 10000
+                if read_cache['data'][keys][3] >= 0.02:
+                    add_data['trading_data']['z_buy'] += read_cache['data'][keys][5] / 10000
+                elif read_cache['data'][keys][3] <= -0.02:
+                    add_data['trading_data']['z_sell'] += read_cache['data'][keys][5] / 10000
 
                 # 超大中小单
-                if eval(read_cache['data'][keys][5]) >= 5000000:
-                    add_data['trading_data']['caoda_dan'] += eval(read_cache['data'][keys][5]) / 10000
-                if eval(read_cache['data'][keys][5]) >= 500000:
-                    add_data['trading_data']['da_dan'] += eval(read_cache['data'][keys][5]) / 10000
-                elif 200000 <= eval(read_cache['data'][keys][5]) < 500000:
-                    add_data['trading_data']['zhong_dan'] += eval(read_cache['data'][keys][5]) / 10000
+                if read_cache['data'][keys][5] >= 5000000:
+                    add_data['trading_data']['caoda_dan'] += read_cache['data'][keys][5] / 10000
+                if read_cache['data'][keys][5] >= 500000:
+                    add_data['trading_data']['da_dan'] += read_cache['data'][keys][5] / 10000
+                elif 200000 <= read_cache['data'][keys][5] < 500000:
+                    add_data['trading_data']['zhong_dan'] += read_cache['data'][keys][5] / 10000
                 else:
-                    add_data['trading_data']['xiao_dan'] += eval(read_cache['data'][keys][5]) / 10000
+                    add_data['trading_data']['xiao_dan'] += read_cache['data'][keys][5] / 10000
 
                 # 流出入
                 if read_cache['data'][keys][-1] == 'B':
-                    add_data['trading_data']['liu_ru'] += eval(read_cache['data'][keys][5]) / 10000
+                    add_data['trading_data']['liu_ru'] += read_cache['data'][keys][5] / 10000
                 elif read_cache['data'][keys][-1] == 'S':
-                    add_data['trading_data']['liu_chu'] += eval(read_cache['data'][keys][5]) / 10000
+                    add_data['trading_data']['liu_chu'] += read_cache['data'][keys][5] / 10000
                 else:
-                    add_data['trading_data']['zhong_xing'] += eval(read_cache['data'][keys][5]) / 10000
+                    add_data['trading_data']['zhong_xing'] += read_cache['data'][keys][5] / 10000
 
                 # 总量
-                add_data['trading_data']['total'] += eval(read_cache['data'][keys][5]) / 100000000
+                add_data['trading_data']['total'] += read_cache['data'][keys][5] / 100000000
             return add_data
         return None
