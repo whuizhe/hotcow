@@ -46,7 +46,7 @@ class TradingVoViewSet(APIView):
             if int(datetime.datetime.now().strftime('%H')) <= 8:
                 trading_day = Base(TradingDay).findone(query_day[0].id - 1).day
             for i in my_code:
-                add_data = self._trading_volume(f'{i.exchange}{i.code}'.lower(), i.id)
+                add_data = self._trading_volume(f'{i.exchange}{i.code}'.lower())
                 if not Base(MyChoiceData, **{
                     'sk_info_id': i.id,
                     'trading_day': trading_day
@@ -72,9 +72,10 @@ class TradingVoViewSet(APIView):
         redis_key = f'constantly_deal_{code}_{datetime.date.today()}_cache'
         read_cache = cache.get(redis_key)
         if not read_cache:
-            read_cache = OrderedDict()
-            read_cache['number'] = 0
-            read_cache['data'] = OrderedDict()
+            read_cache = {
+                'number': 0,
+                'data': []
+            }
 
         for i in range(read_cache['number'], 100):
             url = f'{settings.QT_URL3}data/index.php?appn=detail&action=data&c={code}&p={i}'
@@ -84,14 +85,15 @@ class TradingVoViewSet(APIView):
                     deal_info = re.search('\".*\"', url_info)
                     for m in deal_info.group().replace('"', '').split('|'):
                         ms = m.split('/')
-                        read_cache['data'][ms[1]] = (
+                        read_cache['data'].append((
                             eval(ms[0]),
+                            ms[1],
                             eval(ms[2]),
                             eval(ms[3]),
                             eval(ms[4]),
                             eval(ms[5]),
                             ms[6]
-                        )
+                        ))
                 else:
                     read_cache['number'] = i - 1
                     break
@@ -99,7 +101,7 @@ class TradingVoViewSet(APIView):
         cache.set(redis_key, read_cache, timeout=3 * 24 * 60 * 60)
         return None
 
-    def _trading_volume(self, code, sid: int = 0):
+    def _trading_volume(self, code):
         """
         数据分析
         """
@@ -107,9 +109,7 @@ class TradingVoViewSet(APIView):
         read_cache = cache.get(redis_key)
         if read_cache:
             add_data = {
-                'sk_info_id': sid,
                 'deal_data': read_cache['data'],
-                'trading_day': datetime.date.today(),
                 'trading_data': {
                     'z_buy': 0,  # 主买,
                     'z_sell': 0,  # 主卖
@@ -124,32 +124,32 @@ class TradingVoViewSet(APIView):
                 }
             }
 
-            for keys in read_cache['data']:
+            for i in read_cache['data']:
                 # 主买卖
-                if read_cache['data'][keys][3] >= 0.02:
-                    add_data['trading_data']['z_buy'] += read_cache['data'][keys][5] / 10000
-                elif read_cache['data'][keys][3] <= -0.02:
-                    add_data['trading_data']['z_sell'] += read_cache['data'][keys][5] / 10000
+                if i[3] >= 0.02:
+                    add_data['trading_data']['z_buy'] += i[5] / 10000
+                elif i[3] <= -0.02:
+                    add_data['trading_data']['z_sell'] += i[5] / 10000
 
                 # 超大中小单
-                if read_cache['data'][keys][5] >= 5000000:
-                    add_data['trading_data']['caoda_dan'] += read_cache['data'][keys][5] / 10000
-                if read_cache['data'][keys][5] >= 500000:
-                    add_data['trading_data']['da_dan'] += read_cache['data'][keys][5] / 10000
-                elif 200000 <= read_cache['data'][keys][5] < 500000:
-                    add_data['trading_data']['zhong_dan'] += read_cache['data'][keys][5] / 10000
+                if i[5] >= 5000000:
+                    add_data['trading_data']['caoda_dan'] += i[5] / 10000
+                if i[5] >= 500000:
+                    add_data['trading_data']['da_dan'] += i[5] / 10000
+                elif 200000 <= i[5] < 500000:
+                    add_data['trading_data']['zhong_dan'] += i[5] / 10000
                 else:
-                    add_data['trading_data']['xiao_dan'] += read_cache['data'][keys][5] / 10000
+                    add_data['trading_data']['xiao_dan'] += i[5] / 10000
 
                 # 流出入
-                if read_cache['data'][keys][-1] == 'B':
-                    add_data['trading_data']['liu_ru'] += read_cache['data'][keys][5] / 10000
-                elif read_cache['data'][keys][-1] == 'S':
-                    add_data['trading_data']['liu_chu'] += read_cache['data'][keys][5] / 10000
+                if i[-1] == 'B':
+                    add_data['trading_data']['liu_ru'] += i[5] / 10000
+                elif i[-1] == 'S':
+                    add_data['trading_data']['liu_chu'] += i[5] / 10000
                 else:
-                    add_data['trading_data']['zhong_xing'] += read_cache['data'][keys][5] / 10000
+                    add_data['trading_data']['zhong_xing'] += i[5] / 10000
 
                 # 总量
-                add_data['trading_data']['total'] += read_cache['data'][keys][5] / 100000000
+                add_data['trading_data']['total'] += i[5] / 100000000
             return add_data
         return None
