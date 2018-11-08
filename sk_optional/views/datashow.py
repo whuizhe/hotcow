@@ -2,9 +2,12 @@
 """历史交易"""
 import requests
 import datetime
+import numpy as np
+import matplotlib.pyplot as plt
 from django.conf import settings
 from django.views.generic import View
 from django.shortcuts import render, redirect
+from django.http import JsonResponse
 
 from extends import Base, trading_day
 from basicdata.models import StockInfo, StockPrice
@@ -107,15 +110,18 @@ class AnalysisShowViewSet(View):
             'sk_info_id__in': [i.id for i in code_info],
             'trading_day': datetime.date.today()
         }).findfilter()
+        for i in my_code_data:
+            pass
+
         context = {
             'param': my_code_data,
         }
-        print(context)
         return render(request, 'sk_optional/analysisshow.html', context)
 
     def post(self, request, code):
+        code = str(request.body.decode()).split('=')[1]
         Base(StockInfo, **{'db_status': 1, 'code': code}).update({'my_choice': 1})
-        return redirect('/skoptional/analysisshow/')
+        return JsonResponse({'add': code})
 
     def delete(self, request, code):
         Base(StockInfo, **{'db_status': 1, 'code': code}).update({'my_choice': 0})

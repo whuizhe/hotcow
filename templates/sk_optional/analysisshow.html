@@ -5,12 +5,12 @@
     <div class="row wrapper border-bottom white-bg page-heading">
         <div class="col-lg-3">
             <div class="search-form">
-                <form action="?code=" method="get">
+                <form action="" method="post">
                     <div class="input-group">
                         <input type="text" placeholder="输入代码" name="code" class="form-control input-s-lg">
                         <div class="input-group-btn">
                             <button class="btn btn-primary" type="submit">
-                                Search
+                                Add
                             </button>
                         </div>
                     </div>
@@ -44,7 +44,7 @@
                         <tbody>
                         {% for i in param %}
                             <tr>
-                                <td>{{ i.sk_info.code }}</td>
+                                <td>{{ i.sk_info.code }} <button>删除</button></td>
                                 <td>{{ i.sk_info.name }}</td>
                                 <td>{{ i.sk_info.region }}</td>
                                 {% if i.sk_info.new == 1 %}
@@ -69,16 +69,11 @@
         </div>
     </div>
 {#    <div class="row">#}
-{#        <div class="col-lg-9">#}
+{#        <div class="col-lg-12">#}
 {#            <div class="ibox float-e-margins">#}
 {#                <div class="ibox-content">#}
 {#                    <div id="container" style="height:400px;"></div>#}
 {#                </div>#}
-{#            </div>#}
-{#        </div>#}
-{#        <div class="col-lg-3">#}
-{#                <div class="ibox-content">#}
-{#                    <div id="main" style="height:400px;"></div>#}
 {#            </div>#}
 {#        </div>#}
 {#    </div>#}
@@ -88,5 +83,5 @@
 {% endblock %}
 
 {% block js %}
-
+    <script src="/static/components/js/plugins/echarts/echarts.min.js"></script>
 {% endblock %}

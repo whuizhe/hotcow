@@ -27,35 +27,39 @@ class TradingVoViewSet(APIView):
     """
 
     def get(self, request):
-        data = request.GET
-        if Base(TradingDay, **{'day': datetime.date.today()}).findfilter():
+        query_day = Base(TradingDay, **{'day': datetime.date.today()}).findfilter()
+        if query_day:
+            # 抓取数据
             my_code = Base(StockInfo, **{'db_status': 1, 'my_choice': 1}).findfilter()
-            if not data:
-                tasks = []
-                for i in my_code:
-                    tasks.append(self._constantly_deal(f'{i.exchange}{i.code}'.lower()))
+            tasks = []
+            for i in my_code:
+                tasks.append(self._constantly_deal(f'{i.exchange}{i.code}'.lower()))
 
-                if tasks:
-                    asyncio.set_event_loop(asyncio.new_event_loop())  # 创建新的协程
-                    loop = asyncio.get_event_loop()
-                    loop.run_until_complete(asyncio.wait(tasks))
-                    loop.close()
-            elif data and 'save' in data:
-                for i in my_code:
-                    add_data = self._trading_volume(f'{i.exchange}{i.code}'.lower(), i.id)
-                    if not Base(MyChoiceData, **{
+            if tasks:
+                asyncio.set_event_loop(asyncio.new_event_loop())  # 创建新的协程
+                loop = asyncio.get_event_loop()
+                loop.run_until_complete(asyncio.wait(tasks))
+                loop.close()
+
+            # 分析并保存到db
+            trading_day = str(datetime.date.today())
+            if int(datetime.datetime.now().strftime('%H')) <= 8:
+                trading_day = Base(TradingDay).findone(query_day[0].id - 1).day
+            for i in my_code:
+                add_data = self._trading_volume(f'{i.exchange}{i.code}'.lower(), i.id)
+                if not Base(MyChoiceData, **{
+                    'sk_info_id': i.id,
+                    'trading_day': trading_day
+                }).findfilter():
+                    Base(MyChoiceData, **add_data).save_db()
+                else:
+                    Base(MyChoiceData, **{
                         'sk_info_id': i.id,
-                        'trading_day': str(datetime.date.today())
-                    }).findfilter():
-                        Base(MyChoiceData, **add_data).save_db()
-                    else:
-                        Base(MyChoiceData, **{
-                            'sk_info_id': i.id,
-                            'trading_day': str(datetime.date.today())
-                        }).update({
-                            'deal_data': add_data['deal_data'],
-                            'trading_data': add_data['trading_data']
-                        })
+                        'trading_day': trading_day
+                    }).update({
+                        'deal_data': add_data['deal_data'],
+                        'trading_data': add_data['trading_data']
+                    })
         return Response({"BasisData": {"Status": 1, "msg": "Trading Vo Node"}})
 
     @staticmethod
@@ -89,6 +93,9 @@ class TradingVoViewSet(APIView):
         return None
 
     def _trading_volume(self, code, sid: int = 0):
+        """
+        数据分析
+        """
         redis_key = f'constantly_deal_{code}_{datetime.date.today()}_cache'
         read_cache = cache.get(redis_key)
         if read_cache:
@@ -114,13 +121,16 @@ class TradingVoViewSet(APIView):
             for keys in read_cache['data']:
                 if keys[:-3] not in add_data['trading_data']['minute_data']:
                     add_data['trading_data']['minute_data'][keys[:-3]] = {
-                        'z_buy': 0,
-                        'z_sell': 0,
-                        'da_dan': 0,
-                        'zhong_dan': 0,
-                        'xiao_dan': 0,
-                        'caoda_dan': 0,
-                        'total': 0
+                        'z_buy': 0,  # 主买,
+                        'z_sell': 0,  # 主卖
+                        'caoda_dan': 0,  # 超大单
+                        'da_dan': 0,  # 大单
+                        'zhong_dan': 0,  # 中单
+                        'xiao_dan': 0,  # 小单
+                        'zhong_xing': 0,  # 中性盘,
+                        'liu_ru': 0,  # 流入
+                        'liu_chu': 0,  # 流出
+                        'total': 0,
                     }
 
                 # 主买卖
@@ -157,10 +167,16 @@ class TradingVoViewSet(APIView):
                 # 流出入
                 if read_cache['data'][keys][-1] == 'B':
                     add_data['trading_data']['liu_ru'] += eval(read_cache['data'][keys][5]) / 10000
+                    add_data['trading_data']['minute_data'][keys[:-3]]['liu_ru'] += eval(
+                        read_cache['data'][keys][5]) / 10000
                 elif read_cache['data'][keys][-1] == 'S':
                     add_data['trading_data']['liu_chu'] += eval(read_cache['data'][keys][5]) / 10000
+                    add_data['trading_data']['minute_data'][keys[:-3]]['liu_chu'] += eval(
+                        read_cache['data'][keys][5]) / 10000
                 else:
                     add_data['trading_data']['zhong_xing'] += eval(read_cache['data'][keys][5]) / 10000
+                    add_data['trading_data']['minute_data'][keys[:-3]]['zhong_xing'] += eval(
+                        read_cache['data'][keys][5]) / 10000
                 # 总量
                 add_data['trading_data']['total'] += eval(read_cache['data'][keys][5]) / 100000000
                 add_data['trading_data']['minute_data'][keys[:-3]]['total'] += eval(
