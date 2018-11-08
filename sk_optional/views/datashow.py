@@ -103,26 +103,24 @@ class DataShowViewSet(View):
 class AnalysisShowViewSet(View):
     """分析数据展示"""
 
-    def get(self, request, code):
+    def get(self, request):
         """GET请求"""
         code_info = Base(StockInfo, **{'db_status': 1, 'my_choice': 1}).findfilter()
         my_code_data = Base(MyChoiceData, **{
             'sk_info_id__in': [i.id for i in code_info],
             'trading_day': datetime.date.today()
         }).findfilter()
-        for i in my_code_data:
-            pass
 
         context = {
             'param': my_code_data,
         }
         return render(request, 'sk_optional/analysisshow.html', context)
 
-    def post(self, request, code):
+    def post(self, request):
         code = str(request.body.decode()).split('=')[1]
         Base(StockInfo, **{'db_status': 1, 'code': code}).update({'my_choice': 1})
         return JsonResponse({'add': code})
 
-    def delete(self, request, code):
-        Base(StockInfo, **{'db_status': 1, 'code': code}).update({'my_choice': 0})
+    def delete(self, request):
+        Base(StockInfo, **{'db_status': 1, 'code': '000001'}).update({'my_choice': 0})
         return redirect('/skoptional/analysisshow/')
