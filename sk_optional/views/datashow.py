@@ -2,16 +2,16 @@
 """历史交易"""
 import requests
 import datetime
-import numpy as np
 import matplotlib.pyplot as plt
 from django.conf import settings
 from django.views.generic import View
 from django.shortcuts import render, redirect
-from django.http import JsonResponse
 
 from extends import Base, trading_day
 from basicdata.models import StockInfo, StockPrice
 from sk_optional.models import MyChoiceData
+from intraday.views import TradingVoViewSet
+
 
 __all__ = ['DataShowViewSet', 'AnalysisShowViewSet']
 
@@ -105,22 +105,59 @@ class AnalysisShowViewSet(View):
 
     def get(self, request):
         """GET请求"""
-        code_info = Base(StockInfo, **{'db_status': 1, 'my_choice': 1}).findfilter()
-        my_code_data = Base(MyChoiceData, **{
-            'sk_info_id__in': [i.id for i in code_info],
-            'trading_day': datetime.date.today()
-        }).findfilter()
+        data = request.GET
+        if not data:
+            code_info = Base(StockInfo, **{'db_status': 1, 'my_choice': 1}).findfilter()
+            my_code_data = Base(MyChoiceData, **{
+                'sk_info_id__in': [i.id for i in code_info],
+                'trading_day': datetime.date.today()
+            }).findfilter()
 
-        context = {
-            'param': my_code_data,
-        }
-        return render(request, 'sk_optional/analysisshow.html', context)
+            context = {
+                'param': my_code_data,
+            }
+            return render(request, 'sk_optional/analysisshow.html', context)
+
+        elif data and 'sid' in data:
+            if 'sid' in data and 'day' in data:
+                my_code_data = Base(MyChoiceData, **{
+                    'sk_info_id': data['sid'],
+                    'trading_day': data['day']
+                }).findfilter()
+            else:
+                my_code_data = Base(MyChoiceData, **{
+                    'sk_info_id': data['sid'],
+                    'trading_day': datetime.date.today()
+                }).findfilter()
+            if my_code_data:
+                minutes_data = TradingVoViewSet.minutes_data(my_code_data[0].deal_data)
+                # 生成图表
+                X = list(minutes_data.keys())
+                C1 = [minutes_data[i]['liu_ru'] for i in minutes_data]
+                S1 = [minutes_data[i]['liu_chu'] for i in minutes_data]
+                C2 = [minutes_data[i]['z_buy'] for i in minutes_data]
+                S2 = [minutes_data[i]['z_sell'] for i in minutes_data]
+                T = [minutes_data[i]['total'] for i in minutes_data]
+                plt.figure(figsize=(65, 16))
+                plt.bar(X, T, label="Total")
+                plt.bar(X, C1, label="ru")
+                plt.bar(X, S1, label="chu")
+                plt.bar(X, C2, label="mai1")
+                plt.bar(X, S2, label="mai2")
+                plt.xticks(rotation=45)
+                plt.legend(loc='upper left', frameon=False)
+                plt.show()
+                return redirect('/skoptional/analysisshow/')
+
+        return redirect('/skoptional/analysisshow/')
 
     def post(self, request):
         code = str(request.body.decode()).split('=')[1]
-        Base(StockInfo, **{'db_status': 1, 'code': code}).update({'my_choice': 1})
-        return JsonResponse({'add': code})
-
-    def delete(self, request):
-        Base(StockInfo, **{'db_status': 1, 'code': '000001'}).update({'my_choice': 0})
+        code_query = Base(StockInfo, **{'db_status': 1, 'code': code}).findfilter()
+        if code_query:
+            if code_query[0].my_choice == 1:
+                code_query[0].my_choice = 0
+            else:
+                code_query[0].my_choice = 1
+            code_query[0].save()
         return redirect('/skoptional/analysisshow/')

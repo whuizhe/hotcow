@@ -10,7 +10,7 @@
                         <input type="text" placeholder="输入代码" name="code" class="form-control input-s-lg">
                         <div class="input-group-btn">
                             <button class="btn btn-primary" type="submit">
-                                Add
+                                Add or Del
                             </button>
                         </div>
                     </div>
@@ -45,8 +45,8 @@
                         <tbody>
                         {% for i in param %}
                             <tr>
-                                <td>{{ i.sk_info.id }}</td>
-                                <td>{{ i.sk_info.code }} <button>删除</button></td>
+                                <td><a href="?sid={{ i.sk_info.id }}">{{ i.sk_info.id }}</a></td>
+                                <td>{{ i.sk_info.code }}</td>
                                 <td>{{ i.sk_info.name }}</td>
                                 <td>{{ i.sk_info.region }}</td>
                                 {% if i.sk_info.new == 1 %}

@@ -154,3 +154,50 @@ class TradingVoViewSet(APIView):
                 add_data['trading_data']['total'] += i[5] / 100000000
             return add_data
         return None
+
+    @staticmethod
+    def minutes_data(data: list):
+        """按分钟 数据分析"""
+        minutes_data = OrderedDict()
+        for i in data:
+            if i[1][:3] not in minutes_data:
+                minutes_data[i[1][:-3]] = {
+                    'z_buy': 0,  # 主买,
+                    'z_sell': 0,  # 主卖
+                    'caoda_dan': 0,  # 超大单
+                    'da_dan': 0,  # 大单
+                    'zhong_dan': 0,  # 中单
+                    'xiao_dan': 0,  # 小单
+                    'zhong_xing': 0,  # 中性盘,
+                    'liu_ru': 0,  # 流入
+                    'liu_chu': 0,  # 流出
+                    'total': 0,
+                }
+            # 主买卖
+            if i[3] >= 0.02:
+                minutes_data[i[1][:-3]]['z_buy'] += i[5] / 10000
+            elif i[3] <= -0.02:
+                minutes_data[i[1][:-3]]['z_sell'] += i[5] / 10000
+
+            # 超大中小单
+            if i[5] >= 5000000:
+                minutes_data[i[1][:-3]]['caoda_dan'] += i[5] / 10000
+            if i[5] >= 500000:
+                minutes_data[i[1][:-3]]['da_dan'] += i[5] / 10000
+            elif 200000 <= i[5] < 500000:
+                minutes_data[i[1][:-3]]['zhong_dan'] += i[5] / 10000
+            else:
+                minutes_data[i[1][:-3]]['xiao_dan'] += i[5] / 10000
+
+            # 流出入
+            if i[-1] == 'B':
+                minutes_data[i[1][:-3]]['liu_ru'] += i[5] / 10000
+            elif i[-1] == 'S':
+                minutes_data[i[1][:-3]]['liu_chu'] += i[5] / 10000
+            else:
+                minutes_data[i[1][:-3]]['zhong_xing'] += i[5] / 10000
+
+            # 总量
+            minutes_data[i[1][:-3]]['total'] += i[5] / 10000
+
+        return minutes_data
