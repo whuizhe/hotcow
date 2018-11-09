@@ -159,9 +159,10 @@ class TradingVoViewSet(APIView):
     def minutes_data(data: list):
         """按分钟 数据分析"""
         minutes_data = OrderedDict()
-        for i in data:
-            if i[1][:3] not in minutes_data:
-                minutes_data[i[1][:-3]] = {
+        for i in data[1:]:
+            minutes_time = i[1][:-3]
+            if minutes_time not in minutes_data:
+                minutes_data[minutes_time] = {
                     'z_buy': 0,  # 主买,
                     'z_sell': 0,  # 主卖
                     'caoda_dan': 0,  # 超大单
@@ -175,29 +176,29 @@ class TradingVoViewSet(APIView):
                 }
             # 主买卖
             if i[3] >= 0.02:
-                minutes_data[i[1][:-3]]['z_buy'] += i[5] / 10000
+                minutes_data[minutes_time]['z_buy'] += i[5] / 10000
             elif i[3] <= -0.02:
-                minutes_data[i[1][:-3]]['z_sell'] += i[5] / 10000
+                minutes_data[minutes_time]['z_sell'] += i[5] / 10000
 
             # 超大中小单
             if i[5] >= 5000000:
-                minutes_data[i[1][:-3]]['caoda_dan'] += i[5] / 10000
+                minutes_data[minutes_time]['caoda_dan'] += i[5] / 10000
             if i[5] >= 500000:
-                minutes_data[i[1][:-3]]['da_dan'] += i[5] / 10000
+                minutes_data[minutes_time]['da_dan'] += i[5] / 10000
             elif 200000 <= i[5] < 500000:
-                minutes_data[i[1][:-3]]['zhong_dan'] += i[5] / 10000
+                minutes_data[minutes_time]['zhong_dan'] += i[5] / 10000
             else:
-                minutes_data[i[1][:-3]]['xiao_dan'] += i[5] / 10000
+                minutes_data[minutes_time]['xiao_dan'] += i[5] / 10000
 
             # 流出入
             if i[-1] == 'B':
-                minutes_data[i[1][:-3]]['liu_ru'] += i[5] / 10000
+                minutes_data[minutes_time]['liu_ru'] += i[5] / 10000
             elif i[-1] == 'S':
-                minutes_data[i[1][:-3]]['liu_chu'] += i[5] / 10000
+                minutes_data[minutes_time]['liu_chu'] += i[5] / 10000
             else:
-                minutes_data[i[1][:-3]]['zhong_xing'] += i[5] / 10000
+                minutes_data[minutes_time]['zhong_xing'] += i[5] / 10000
 
             # 总量
-            minutes_data[i[1][:-3]]['total'] += i[5] / 10000
+            minutes_data[minutes_time]['total'] += i[5] / 10000
 
         return minutes_data
