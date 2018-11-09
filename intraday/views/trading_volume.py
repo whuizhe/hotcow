@@ -51,6 +51,7 @@ class TradingVoViewSet(APIView):
                     'sk_info_id': i.id,
                     'trading_day': trading_day
                 }).findfilter():
+                    add_data['sk_info_id'] = i.id
                     Base(MyChoiceData, **add_data).save_db()
                 else:
                     Base(MyChoiceData, **{
