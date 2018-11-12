@@ -159,7 +159,7 @@ class TradingVoViewSet(APIView):
     def minutes_data(data: list):
         """按分钟 数据分析"""
         minutes_data = OrderedDict()
-        for i in data[1:]:
+        for i in data[1:-1]:
             minutes_time = i[1][:-3]
             if minutes_time not in minutes_data:
                 minutes_data[minutes_time] = {

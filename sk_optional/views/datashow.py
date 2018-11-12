@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """历史交易"""
 import requests
-import datetime
 import matplotlib.pyplot as plt
 from django.conf import settings
 from django.views.generic import View
@@ -110,7 +109,7 @@ class AnalysisShowViewSet(View):
             code_info = Base(StockInfo, **{'db_status': 1, 'my_choice': 1}).findfilter()
             my_code_data = Base(MyChoiceData, **{
                 'sk_info_id__in': [i.id for i in code_info],
-                'trading_day': datetime.date.today()
+                'trading_day': trading_day(1)[0]
             }).findfilter()
 
             context = {
@@ -127,26 +126,44 @@ class AnalysisShowViewSet(View):
             else:
                 my_code_data = Base(MyChoiceData, **{
                     'sk_info_id': data['sid'],
-                    'trading_day': datetime.date.today()
+                    'trading_day': trading_day(1)[0]
                 }).findfilter()
             if my_code_data:
                 minutes_data = TradingVoViewSet.minutes_data(my_code_data[0].deal_data)
                 # 生成图表
-                X = list(minutes_data.keys())
-                C1 = [minutes_data[i]['liu_ru'] for i in minutes_data]
-                S1 = [minutes_data[i]['liu_chu'] for i in minutes_data]
-                C2 = [minutes_data[i]['z_buy'] for i in minutes_data]
-                S2 = [minutes_data[i]['z_sell'] for i in minutes_data]
-                T = [minutes_data[i]['total'] for i in minutes_data]
+                chart_data = {
+                    'bar': ['Total', 'liu_ru', 'liu_chu', 'z_buy', 'z_sell'],
+                    'keys': [],
+                    'liu_ru': [],
+                    'liu_chu': [],
+                    'z_buy': [],
+                    'z_sell': [],
+                    'Total': []
+                }
+                for i in minutes_data:
+                    chart_data['keys'].append(i)
+                    chart_data['liu_ru'].append(minutes_data[i]['liu_ru'])
+                    chart_data['liu_chu'].append(minutes_data[i]['liu_chu'])
+                    chart_data['z_buy'].append(minutes_data[i]['z_buy'])
+                    chart_data['z_sell'].append(minutes_data[i]['z_sell'])
+                    chart_data['Total'].append(minutes_data[i]['total'])
+
                 plt.figure(figsize=(65, 16))
-                plt.bar(X, T, label="Total")
-                plt.bar(X, C1, label="ru")
-                plt.bar(X, S1, label="chu")
-                plt.bar(X, C2, label="mai1")
-                plt.bar(X, S2, label="mai2")
+                for keys in chart_data['bar']:
+                    plt.bar(chart_data['keys'], chart_data[keys], label=keys)
                 plt.xticks(rotation=45)
                 plt.legend(loc='upper left', frameon=False)
+                jingliu = round((sum(chart_data['liu_ru']) - sum(chart_data['liu_chu'])) / 10000, 2)
+                zhumai1 = round(sum(chart_data['z_buy']) / 10000, 2)
+                zhumai2 = round(sum(chart_data['z_sell']) / 10000, 2)
+                totle = sum(chart_data['Total']) / 10000
+                plt.title(
+                    f"Jingliu ({jingliu} {round(jingliu / totle, 2) * 100}%) "
+                    f"Zhumai ({round(zhumai1 - zhumai2, 2)} {round((zhumai1 - zhumai2)  / totle, 2) * 100}%) ",
+                    fontsize='60'
+                )
                 plt.show()
+
                 return redirect('/skoptional/analysisshow/')
 
         return redirect('/skoptional/analysisshow/')
@@ -160,4 +177,5 @@ class AnalysisShowViewSet(View):
             else:
                 code_query[0].my_choice = 1
             code_query[0].save()
+
         return redirect('/skoptional/analysisshow/')
