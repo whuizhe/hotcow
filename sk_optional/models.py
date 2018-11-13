@@ -23,7 +23,7 @@ class MyChoiceData(models.Model):
     """我的数据"""
 
     id = models.AutoField(primary_key=True, blank=False, auto_created=True)
-    sk_info = models.ForeignKey(StockInfo, on_delete=None, related_query_name='sk_info_id')
+    code = models.CharField(verbose_name='代码', max_length=11, blank=False)
     trading_day = models.DateField(auto_now_add=False, auto_now=True, blank=True)
     trading_data = JSONField(verbose_name='交易数据')
     deal_data = JSONField(verbose_name='分价数据')

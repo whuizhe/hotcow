@@ -12,7 +12,6 @@ from rest_framework.views import APIView
 
 from extends import Base
 from basicdata.models import TradingDay, StockInfo
-from sk_optional.models import MyChoiceData
 
 
 __all__ = ['TradingVoViewSet']
@@ -41,26 +40,6 @@ class TradingVoViewSet(APIView):
                 loop.run_until_complete(asyncio.wait(tasks))
                 loop.close()
 
-            # 分析并保存到db
-            trading_day = str(datetime.date.today())
-            if int(datetime.datetime.now().strftime('%H')) <= 8:
-                trading_day = Base(TradingDay).findone(query_day[0].id - 1).day
-            for i in my_code:
-                add_data = self._trading_volume(f'{i.exchange}{i.code}'.lower())
-                if not Base(MyChoiceData, **{
-                    'sk_info_id': i.id,
-                    'trading_day': trading_day
-                }).findfilter():
-                    add_data['sk_info_id'] = i.id
-                    Base(MyChoiceData, **add_data).save_db()
-                else:
-                    Base(MyChoiceData, **{
-                        'sk_info_id': i.id,
-                        'trading_day': trading_day
-                    }).update({
-                        'deal_data': add_data['deal_data'],
-                        'trading_data': add_data['trading_data']
-                    })
         return Response({"BasisData": {"Status": 1, "msg": "Trading Vo Node"}})
 
     @staticmethod

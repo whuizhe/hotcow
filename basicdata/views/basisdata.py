@@ -87,6 +87,7 @@ class BasisDataViewSet(APIView):
                     if code_price_info[-9] and code_price_info[3]:
                         query_code[0].total_equity = round(float(code_price_info[-9]) / float(code_price_info[3]), 3)
                         query_code[0].circulate_equity = round(float(code_price_info[-10]) / float(code_price_info[3]), 3)
+                    query_code[0].market_value = round(query_code[0].total_equity * float(code_price_info[3]), 0)
                     query_code[0].save()
 
             # 缓存数据到redis
@@ -96,6 +97,7 @@ class BasisDataViewSet(APIView):
                     'exchange': f'{str(codes.exchange).lower()}{codes.code}',
                     'code': codes.code,
                     'circulate_equity': codes.circulate_equity,
+                    'market_value': codes.market_value,
                     'new': codes.new,
                     'sid': codes.id
                 }

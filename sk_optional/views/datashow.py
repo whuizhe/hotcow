@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 """历史交易"""
+import datetime
 import requests
 import matplotlib.pyplot as plt
 from django.conf import settings
 from django.views.generic import View
+from django.core.cache import cache
 from django.shortcuts import render, redirect
 
 from extends import Base, trading_day
 from basicdata.models import StockInfo, StockPrice
-from sk_optional.models import MyChoiceData
 from intraday.views import TradingVoViewSet
 
 
@@ -107,29 +108,19 @@ class AnalysisShowViewSet(View):
         data = request.GET
         if not data:
             code_info = Base(StockInfo, **{'db_status': 1, 'my_choice': 1}).findfilter()
-            my_code_data = Base(MyChoiceData, **{
-                'sk_info_id__in': [i.id for i in code_info],
-                'trading_day': trading_day(1)[0]
-            }).findfilter()
-
             context = {
-                'param': my_code_data,
+                'param': code_info,
             }
             return render(request, 'sk_optional/analysisshow.html', context)
 
-        elif data and 'sid' in data:
-            if 'sid' in data and 'day' in data:
-                my_code_data = Base(MyChoiceData, **{
-                    'sk_info_id': data['sid'],
-                    'trading_day': data['day']
-                }).findfilter()
+        elif data and 'code' in data:
+            if 'day' in data:
+                redis_key = f'constantly_deal_{str(data["code"]).lower()}_{data["day"]}_cache'
             else:
-                my_code_data = Base(MyChoiceData, **{
-                    'sk_info_id': data['sid'],
-                    'trading_day': trading_day(1)[0]
-                }).findfilter()
-            if my_code_data:
-                minutes_data = TradingVoViewSet.minutes_data(my_code_data[0].deal_data)
+                redis_key = f'constantly_deal_{str(data["code"]).lower()}_{datetime.date.today()}_cache'
+            read_cache = cache.get(redis_key)
+            if read_cache['data']:
+                minutes_data = TradingVoViewSet.minutes_data(read_cache['data'])
                 # 生成图表
                 chart_data = {
                     'bar': ['Total', 'liu_ru', 'liu_chu', 'z_buy', 'z_sell'],

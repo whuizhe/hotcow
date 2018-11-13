@@ -12,8 +12,10 @@ from rest_framework.views import APIView
 
 from extends import Base
 from basicdata.models import StockPrice, TradingDay
+from sk_optional.models import MyChoiceData
 
-__all__ = ['HistoryDealsViewSet', 'MainFlowsCurrViewSet', 'MainFlowsViewSet']
+
+__all__ = ['HistoryDealsViewSet', 'MainFlowsCurrViewSet', 'MainFlowsViewSet', 'DealDetailViewSet']
 
 
 class HistoryDealsViewSet(APIView):
@@ -174,3 +176,56 @@ class MainFlowsViewSet(APIView):
                     'main_amount': amount_data[2],
                     'loose_amount': amount_data[5]
                 })
+
+
+class DealDetailViewSet(APIView):
+    """成交分笔明细"""
+
+    def get(self, request):
+        tasks = []
+        sk_all = cache.iter_keys('cache_code_info_*')
+        for i in sk_all:
+            sk_info = cache.get(i)
+            if sk_info and sk_info['market_value'] and sk_info['market_value'] <= 120:
+                if not Base(MyChoiceData, **{
+                    'code': sk_info['exchange'],
+                    'trading_day': str(datetime.date.today()),
+                }).findfilter():
+                    tasks.append(self._constantly_deal(sk_info['exchange']))
+
+        asyncio.set_event_loop(asyncio.new_event_loop())  # 创建新的协程
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(asyncio.wait(tasks))
+        loop.close()
+        return Response({'MainFlows': 'data update node'})
+
+
+    async def _constantly_deal(self, code: str) -> None:
+        """时时成交"""
+        deal_data: list = []
+        for i in range(0, 200):
+            url = f'{settings.QT_URL3}data/index.php?appn=detail&action=data&c={code}&p={i}'
+            async with aiohttp.ClientSession() as session:
+                url_info = await HistoryDealsViewSet.fetch(session, url)
+                if url_info:
+                    deal_info = re.search('\".*\"', url_info)
+                    for m in deal_info.group().replace('"', '').split('|'):
+                        ms = m.split('/')
+                        deal_data.append((
+                            eval(ms[0]),
+                            ms[1],
+                            eval(ms[2]),
+                            eval(ms[3]),
+                            eval(ms[4]),
+                            eval(ms[5]),
+                            ms[6]
+                        ))
+                else:
+                    break
+        if deal_data:
+            Base(MyChoiceData, **{
+                'code': code[2:],
+                'trading_day': str(datetime.date.today()),
+                'trading_data': deal_data
+            }).save_db()
+        return None

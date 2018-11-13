@@ -10,4 +10,5 @@ urlpatterns = [
     path('mainflowscurr/', MainFlowsCurrViewSet.as_view(), name='当天行情数据'),
     path('mainflows/', MainFlowsViewSet.as_view(), name='历史资金流向'),
     path('concept/', ConceptViewSet.as_view(), name='概念'),
+    path('dealdetail/', DealDetailViewSet.as_view(), name='成交历史'),
 ]
