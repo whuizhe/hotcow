@@ -183,20 +183,21 @@ class DealDetailViewSet(APIView):
 
     def get(self, request):
         tasks = []
-        sk_all = cache.iter_keys('cache_code_info_*')
-        for i in sk_all:
-            sk_info = cache.get(i)
-            if sk_info and sk_info['market_value'] and sk_info['market_value'] <= 120:
-                if not Base(MyChoiceData, **{
-                    'code': sk_info['exchange'],
-                    'trading_day': str(datetime.date.today()),
-                }).findfilter():
-                    tasks.append(self._constantly_deal(sk_info['exchange']))
+        if Base(TradingDay, **{'day': str(datetime.date.today())}).findfilter():
+            sk_all = cache.iter_keys('cache_code_info_*')
+            for i in sk_all:
+                sk_info = cache.get(i)
+                if sk_info and sk_info['market_value'] and sk_info['market_value'] <= 120:
+                    if not Base(MyChoiceData, **{
+                        'code': sk_info['exchange'],
+                        'trading_day': str(datetime.date.today()),
+                    }).findfilter():
+                        tasks.append(self._constantly_deal(sk_info['exchange']))
 
-        asyncio.set_event_loop(asyncio.new_event_loop())  # 创建新的协程
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(asyncio.wait(tasks))
-        loop.close()
+            asyncio.set_event_loop(asyncio.new_event_loop())  # 创建新的协程
+            loop = asyncio.get_event_loop()
+            loop.run_until_complete(asyncio.wait(tasks))
+            loop.close()
         return Response({'MainFlows': 'data update node'})
 
 

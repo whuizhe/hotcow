@@ -32,7 +32,7 @@ if __name__ == '__main__':
     scheduler.add_job(
         tick, trigger='cron', args=([
                                         'basis/dealdetail/',  # 成交分笔明细
-                                    ], ), hour='23, 1', name='成交分笔明细'
+                                    ], ), hour='22, 23', name='成交分笔明细'
     )
     scheduler.add_job(
         tick, trigger='cron', args=(['basis/historydeals/'], ), hour='16,19', name='历史交易'
