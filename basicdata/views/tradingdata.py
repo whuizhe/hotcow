@@ -102,6 +102,8 @@ class MainFlowsCurrViewSet(APIView):
                     average, hand_number, active_number = 0, 0, 0
                     for i in price_distribute:
                         num = str(i).split('~')
+                        print('----------')
+                        print(num)
                         average += eval(num[0]) * eval(num[2])
                         hand_number += eval(num[2])
                         active_number += eval(num[1])
