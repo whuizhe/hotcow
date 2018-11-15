@@ -5,8 +5,7 @@ from sk_optional.views import *
 
 
 urlpatterns = [
-    path('datashow/', DataShowViewSet.as_view(), name='数据查询'),
-    path('slowcow/', SlowCowViewSet.as_view(), name='慢牛'),
-    path('analysisshow/', AnalysisShowViewSet.as_view(), name='慢牛展示'),
-    path('industry/', IndustryViewSet.as_view(), name='行业'),
+    path('datashow/', DataShowViewSet.as_view(), name='获取腾讯时时交易量'),
+    path('analysisshow/', AnalysisShowViewSet.as_view(), name='分笔交易数据展示'),
+    path('industry/', IndustryViewSet.as_view(), name='行业行情分析'),
 ]

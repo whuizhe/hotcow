@@ -17,10 +17,10 @@ __all__ = ['DataShowViewSet', 'AnalysisShowViewSet']
 
 
 class DataShowViewSet(View):
-    """历史交易"""
+    """获取腾讯时时交易量"""
 
     def get(self, request):
-        """GET请求"""
+        """获取腾讯时时交易量"""
         data = request.GET
         if data and 'code' in data:
             code_data = []
@@ -101,10 +101,10 @@ class DataShowViewSet(View):
 
 
 class AnalysisShowViewSet(View):
-    """分析数据展示"""
+    """分笔交易数据展示"""
 
     def get(self, request):
-        """GET请求"""
+        """分笔交易数据展示"""
         data = request.GET
         if not data:
             code_info = Base(StockInfo, **{'db_status': 1, 'my_choice': 1}).findfilter()

@@ -19,10 +19,10 @@ __all__ = ['HistoryDealsViewSet', 'MainFlowsCurrViewSet', 'MainFlowsViewSet', 'D
 
 
 class HistoryDealsViewSet(APIView):
-    """历史交易"""
+    """同步历史交易"""
 
     def get(self, request):
-        """GET请求"""
+        """同步历史交易"""
         tasks = []
         sk_all = cache.iter_keys('cache_code_info_*')
         for i in sk_all:
@@ -73,7 +73,7 @@ class HistoryDealsViewSet(APIView):
 
 
 class MainFlowsCurrViewSet(APIView):
-    """当天资金流向"""
+    """同步当天资金流向"""
 
     def get(self, request):
         """同步当天资金流向"""
@@ -114,7 +114,7 @@ class MainFlowsCurrViewSet(APIView):
 
 
 class MainFlowsViewSet(APIView):
-    """历史资金流向"""
+    """同步历史资金流向"""
 
     def get(self, request):
         """同步历史资金流向"""
@@ -182,6 +182,7 @@ class DealDetailViewSet(APIView):
     """成交分笔明细"""
 
     def get(self, request):
+        """成交分笔明细"""
         tasks = []
         if Base(TradingDay, **{'day': str(datetime.date.today())}).findfilter():
             sk_all = cache.iter_keys('cache_code_info_*')

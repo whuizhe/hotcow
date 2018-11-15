@@ -8,14 +8,20 @@ from django.conf import settings
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from extends import Base, trading_day
+from basicdata.models import StockPrice
+
 
 class IndustryViewSet(APIView):
-    """领涨行业"""
+    """行业行情分析"""
+    analysis_data = {
+        '连板': {},
+    }
     trading_day = []
 
+
     def get(self, request):
-        """GET请求 """
-        data = request.GET
+        """行业行情分析"""
         if data and 'time' in data:
             industry_name = cache.get(f'industry_coce_cache_{data["time"]}')
         else:
@@ -52,6 +58,29 @@ class IndustryViewSet(APIView):
             cache.set(f'industry_coce_cache_{datetime.date.today()}', industry_name, timeout=None)
         return Response({"Industry": {"param": industry_name}})
 
+    def _continuous_rise(self):
+        """连续上涨"""
+        td = trading_day(6)
+        url = f'{settings.QT_URL3}data/view/dataPro.php?t=2&p=3'
+        url_info = self._open_url(url)
+        find_code = re.findall("'.*'", url_info)
+        if find_code:
+            code_list = str(find_code[0]).replace("'", '').split('^')
+            for i in code_list:
+                code_query = Base(StockPrice, **{'code': str(i).split('~')[0][2:], 'trading_day__in': td}).findfilter()
+                print(str(i).split('~')[0][2:])
+                print(code_query)
+                print([i.average for i in code_query])
+                print(i)
+                return None
+
+    def _accelerated(self):
+        """突放量"""
+        url = f'{settings.QT_URL3}data/view/dataPro.php?t=7&p=1'
+        url_info = self._open_url(url)
+
+        return None
+
     def _open_url(self, url):
         """请求url"""
         url_open = requests.get(url)
@@ -60,3 +89,4 @@ class IndustryViewSet(APIView):
             return url_info
         else:
             return None
+
