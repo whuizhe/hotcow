@@ -12,7 +12,7 @@ __all__ = ['ConceptViewSet']
 
 
 class ConceptViewSet(APIView):
-    """基础概念"""
+    """基础概念同步"""
 
     def get(self, request):
         # 概念

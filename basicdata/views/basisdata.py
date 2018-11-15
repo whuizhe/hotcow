@@ -15,7 +15,7 @@ __all__ = ['BasisDataViewSet']
 
 
 class BasisDataViewSet(APIView):
-    """基础数据"""
+    """基础数据同步"""
     # 次新的定义
     listed_day = 365
     code_list = []
