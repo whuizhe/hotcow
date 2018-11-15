@@ -76,7 +76,7 @@ class MainFlowsCurrViewSet(APIView):
     """当天资金流向"""
 
     def get(self, request):
-        """GET请求"""
+        """同步当天资金流向"""
         if Base(TradingDay, **{'day': datetime.date.today()}).findfilter():
             tasks = []
             sk_all = cache.iter_keys('cache_code_info_*')
@@ -117,7 +117,7 @@ class MainFlowsViewSet(APIView):
     """历史资金流向"""
 
     def get(self, request):
-        """GET请求"""
+        """同步历史资金流向"""
         data = request.GET
         tasks = []
         sk_all = cache.iter_keys('cache_code_info_*')
