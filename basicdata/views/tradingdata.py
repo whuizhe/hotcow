@@ -188,7 +188,6 @@ class DealDetailViewSet(APIView):
         mongo_conn = MongoClient(settings.MONGO_CONN)
         db = mongo_conn.hotcow
         self.collection = db.trading_data
-
         query_query = Base(MyChoiceData).findall()
         for i in query_query:
             add_data = {
@@ -197,6 +196,8 @@ class DealDetailViewSet(APIView):
                 'trading_list': i.trading_data
             }
             mongo_id = self.collection.insert(add_data)
+            print(mongo_id)
+
             i.mongo_id = mongo_id
             i.save()
 
