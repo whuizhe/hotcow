@@ -196,6 +196,7 @@ class DealDetailViewSet(APIView):
                 'trading_day': str(i.trading_day),
                 'trading_list': i.trading_data
             }
+            print(add_data)
             mongo_id = collection.insert(add_data)
             print(mongo_id)
 
