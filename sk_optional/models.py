@@ -24,8 +24,6 @@ class MyChoiceData(models.Model):
     id = models.AutoField(primary_key=True, blank=False, auto_created=True)
     code = models.CharField(verbose_name='代码', max_length=11, blank=False)
     trading_day = models.DateField(auto_now_add=False, auto_now=True, blank=True)
-    trading_data = JSONField(verbose_name='交易数据')
-    deal_data = JSONField(verbose_name='分价数据')
     mongo_id = models.CharField(verbose_name='mongoid', max_length=64, blank=False)
     updated = models.DateTimeField(auto_now_add=False, auto_now=True, blank=True)
 

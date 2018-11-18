@@ -181,29 +181,13 @@ class MainFlowsViewSet(APIView):
 
 class DealDetailViewSet(APIView):
     """成交分笔明细"""
+    mongo_conn = MongoClient(settings.MONGO_CONN)
     collection = None
 
     def get(self, request):
         """成交分笔明细"""
-        mongo_conn = MongoClient(settings.MONGO_CONN)
-        db = mongo_conn.hotcow
-        collection = db.trading_data
-        for i in range(1, 29220):
-            query_query = Base(MyChoiceData).findone(i)
-            if query_query:
-                add_data = {
-                    'code': query_query.code,
-                    'trading_day': str(query_query.trading_day),
-                    'trading_list': query_query.trading_data
-                }
-                mongo_id = collection.insert(add_data)
-                print(mongo_id)
-
-                query_query.mongo_id = mongo_id
-                query_query.save()
-
-        return Response({"node": 1})
-
+        db = self.mongo_conn.hotcow
+        self.collection = db.trading_data
         tasks = []
         if Base(TradingDay, **{'day': str(datetime.date.today())}).findfilter():
             sk_all = cache.iter_keys('cache_code_info_*')
