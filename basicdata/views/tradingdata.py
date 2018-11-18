@@ -188,20 +188,19 @@ class DealDetailViewSet(APIView):
         mongo_conn = MongoClient(settings.MONGO_CONN)
         db = mongo_conn.hotcow
         collection = db.trading_data
-        query_query = Base(MyChoiceData).findall()
-        print(query_query)
-        for i in query_query:
-            add_data = {
-                'code': i.code,
-                'trading_day': str(i.trading_day),
-                'trading_list': i.trading_data
-            }
-            print(add_data)
-            mongo_id = collection.insert(add_data)
-            print(mongo_id)
+        for i in range(1, 29220):
+            query_query = Base(MyChoiceData).findone(i)
+            if query_query:
+                add_data = {
+                    'code': query_query.code,
+                    'trading_day': str(query_query.trading_day),
+                    'trading_list': query_query.trading_data
+                }
+                mongo_id = collection.insert(add_data)
+                print(mongo_id)
 
-            i.mongo_id = mongo_id
-            i.save()
+                query_query.mongo_id = mongo_id
+                query_query.save()
 
         return Response({"node": 1})
 
