@@ -187,15 +187,16 @@ class DealDetailViewSet(APIView):
         """成交分笔明细"""
         mongo_conn = MongoClient(settings.MONGO_CONN)
         db = mongo_conn.hotcow
-        self.collection = db.trading_data
+        collection = db.trading_data
         query_query = Base(MyChoiceData).findall()
+        print(query_query)
         for i in query_query:
             add_data = {
                 'code': i.code,
                 'trading_day': str(i.trading_day),
                 'trading_list': i.trading_data
             }
-            mongo_id = self.collection.insert(add_data)
+            mongo_id = collection.insert(add_data)
             print(mongo_id)
 
             i.mongo_id = mongo_id
