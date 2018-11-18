@@ -22,6 +22,7 @@ class IndustryViewSet(APIView):
 
     def get(self, request):
         """行业行情分析"""
+        data = request.GET
         if data and 'time' in data:
             industry_name = cache.get(f'industry_coce_cache_{data["time"]}')
         else:

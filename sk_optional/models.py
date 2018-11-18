@@ -14,9 +14,8 @@ class Meta:
     permissions = ('add', 'change', 'delete')
 """
 from django_mysql.models import JSONField
+from djongo import models as djongo_models
 from django.db import models
-
-from basicdata.models import StockInfo
 
 
 class MyChoiceData(models.Model):
@@ -27,7 +26,15 @@ class MyChoiceData(models.Model):
     trading_day = models.DateField(auto_now_add=False, auto_now=True, blank=True)
     trading_data = JSONField(verbose_name='交易数据')
     deal_data = JSONField(verbose_name='分价数据')
+    mongo_id = models.CharField(verbose_name='mongoid', max_length=64, blank=False)
     updated = models.DateTimeField(auto_now_add=False, auto_now=True, blank=True)
 
     class Meta:
         db_table = "my_choice_data"
+
+class TradingData(djongo_models.Model):
+    """交易数据-Mongo"""
+
+    code = djongo_models.CharField(verbose_name='code', max_length=16, blank=False)
+    trading_day = djongo_models.DateField(auto_now_add=False, auto_now=True, blank=True)
+    trading_list = djongo_models.ListField()

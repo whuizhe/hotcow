@@ -5,6 +5,7 @@ import re
 import datetime
 import asyncio
 import aiohttp
+from pymongo import MongoClient
 from django.conf import settings
 from django.core.cache import cache
 from rest_framework.response import Response
@@ -102,8 +103,6 @@ class MainFlowsCurrViewSet(APIView):
                     average, hand_number, active_number = 0, 0, 0
                     for i in price_distribute:
                         num = str(i).split('~')
-                        print('----------')
-                        print(num)
                         average += eval(num[0]) * eval(num[2])
                         hand_number += eval(num[2])
                         active_number += eval(num[1])
@@ -182,9 +181,27 @@ class MainFlowsViewSet(APIView):
 
 class DealDetailViewSet(APIView):
     """成交分笔明细"""
+    collection = None
 
     def get(self, request):
         """成交分笔明细"""
+        mongo_conn = MongoClient(settings.MONGO_CONN)
+        db = mongo_conn.hotcow
+        self.collection = db.trading_data
+
+        query_query = Base(MyChoiceData).findall()
+        for i in query_query:
+            add_data = {
+                'code': i.code,
+                'trading_day': str(i.trading_day),
+                'trading_list': i.trading_data
+            }
+            mongo_id = self.collection.insert(add_data)
+            i.mongo_id = mongo_id
+            i.save()
+
+        return Response({"node": 1})
+
         tasks = []
         if Base(TradingDay, **{'day': str(datetime.date.today())}).findfilter():
             sk_all = cache.iter_keys('cache_code_info_*')
@@ -227,9 +244,16 @@ class DealDetailViewSet(APIView):
                 else:
                     break
         if deal_data:
+            add_data = {
+                'code': code[2:],
+                'trading_day': str(datetime.date.today()),
+                'trading_list': deal_data
+            }
+            mongo_id = self.collection.insert(add_data)
+
             Base(MyChoiceData, **{
                 'code': code[2:],
                 'trading_day': str(datetime.date.today()),
-                'trading_data': deal_data
+                'mongo_id': mongo_id
             }).save_db()
         return None
