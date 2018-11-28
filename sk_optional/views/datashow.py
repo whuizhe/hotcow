@@ -149,7 +149,7 @@ class AnalysisShowViewSet(View):
                 zhumai2 = round(sum(chart_data['z_sell']) / 10000, 2)
                 totle = sum(chart_data['Total']) / 10000
                 plt.title(
-                    f"Jingliu ({jingliu} {round(jingliu / totle, 2) * 100}%) "
+                    f"{data['code'][:-3]} Jingliu ({jingliu} {round(jingliu / totle, 2) * 100}%) "
                     f"Zhumai ({round(zhumai1 - zhumai2, 2)} {round((zhumai1 - zhumai2)  / totle, 2) * 100}%) ",
                     fontsize='60'
                 )
