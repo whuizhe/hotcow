@@ -193,9 +193,9 @@ class DealDetailViewSet(APIView):
             sk_all = cache.iter_keys('cache_code_info_*')
             for i in sk_all:
                 sk_info = cache.get(i)
-                if sk_info and sk_info['market_value'] and sk_info['market_value'] <= 120:
+                if sk_info and sk_info['market_value'] and sk_info['market_value'] <= 500:
                     if not Base(MyChoiceData, **{
-                        'code': sk_info['exchange'],
+                        'code': sk_info['code'],
                         'trading_day': str(datetime.date.today()),
                     }).findfilter():
                         tasks.append(self._constantly_deal(sk_info['exchange']))

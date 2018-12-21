@@ -13,7 +13,6 @@ class Meta:
     权限
     permissions = ('add', 'change', 'delete')
 """
-from django_mysql.models import JSONField
 from djongo import models as djongo_models
 from django.db import models
 
@@ -29,6 +28,7 @@ class MyChoiceData(models.Model):
 
     class Meta:
         db_table = "my_choice_data"
+
 
 class TradingData(djongo_models.Model):
     """交易数据-Mongo"""
